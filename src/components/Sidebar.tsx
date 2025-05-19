@@ -1,14 +1,15 @@
 import React from 'react';
-import { Menu, Share2, Trash2, X } from 'lucide-react';
+import { Menu, Share2, Trash2, X, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onDeleteAll: () => void;
+  onSignOut: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignOut }) => {
   const handleShare = async () => {
     try {
       const position = await getCurrentPosition();
@@ -78,10 +79,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll }) => {
             <Trash2 size={20} className="mr-3" />
             Delete All Locations
           </button>
+
+          <button
+            onClick={onSignOut}
+            className="w-full flex items-center px-4 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <LogOut size={20} className="mr-3" />
+            Sign Out
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export default Sidebar;
+export default Sidebar

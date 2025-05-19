@@ -1,6 +1,7 @@
 import { Location, Group } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import * as Excel from 'exceljs';
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY = 'gps-tracker-data';
 
@@ -30,39 +31,139 @@ export const getLocations = (): Location[] => {
 };
 
 // Save a new location
-export const saveLocation = (location: Omit<Location, 'id' | 'createdAt'>): void => {
+export const saveLocation = async (location: Location): Promise<void> => {
+  // Save to localStorage
   const data = initializeStorage();
-  const newLocation: Location = {
-    ...location,
-    id: uuidv4(),
-    createdAt: Date.now(),
-  };
-  
-  data.locations.push(newLocation);
+  data.locations.push(location);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // Get the current user's ID
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to save locations');
+  }
+
+  // Save to Supabase
+  try {
+    const { error } = await supabase.from('locations').insert({
+      id: location.id,
+      title: location.title,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      description: location.description,
+      tags: location.tags,
+      group_id: location.groupId === 'default' ? null : location.groupId,
+      created_at: new Date(location.createdAt).toISOString(),
+      user_id: user.id, // Add the user_id field
+    });
+
+    if (error) {
+      console.error('Error saving to Supabase:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to save to Supabase:', error);
+    // Note: We don't throw here to maintain backwards compatibility
+    // The data is still saved in localStorage
+  }
 };
 
 // Update an existing location
-export const updateLocation = (location: Location): void => {
+export const updateLocation = async (location: Location): Promise<void> => {
+  // Update in localStorage
   const data = initializeStorage();
   data.locations = data.locations.map(loc => 
     loc.id === location.id ? location : loc
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // Get the current user's ID
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to update locations');
+  }
+
+  // Update in Supabase
+  try {
+    const { error } = await supabase
+      .from('locations')
+      .update({
+        title: location.title,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        description: location.description,
+        tags: location.tags,
+        group_id: location.groupId === 'default' ? null : location.groupId,
+      })
+      .eq('id', location.id)
+      .eq('user_id', user.id); // Ensure we only update the user's own locations
+
+    if (error) {
+      console.error('Error updating in Supabase:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to update in Supabase:', error);
+  }
 };
 
 // Delete a location
-export const deleteLocation = (id: string): void => {
+export const deleteLocation = async (id: string): Promise<void> => {
+  // Delete from localStorage
   const data = initializeStorage();
   data.locations = data.locations.filter(location => location.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // Get the current user's ID
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to delete locations');
+  }
+
+  // Delete from Supabase
+  try {
+    const { error } = await supabase
+      .from('locations')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id); // Ensure we only delete the user's own locations
+
+    if (error) {
+      console.error('Error deleting from Supabase:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to delete from Supabase:', error);
+  }
 };
 
 // Delete all locations
-export const deleteAllLocations = (): void => {
+export const deleteAllLocations = async (): Promise<void> => {
+  // Delete from localStorage
   const data = initializeStorage();
   data.locations = [];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // Get the current user's ID
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to delete all locations');
+  }
+
+  // Delete from Supabase
+  try {
+    const { error } = await supabase
+      .from('locations')
+      .delete()
+      .eq('user_id', user.id); // Only delete the user's own locations
+
+    if (error) {
+      console.error('Error deleting all from Supabase:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to delete all from Supabase:', error);
+  }
 };
 
 // Get all groups
@@ -72,29 +173,67 @@ export const getGroups = (): Group[] => {
 };
 
 // Save a new group
-export const saveGroup = (group: Omit<Group, 'id'>): void => {
+export const saveGroup = async (group: Group): Promise<void> => {
+  // Save to localStorage
   const data = initializeStorage();
-  const newGroup: Group = {
-    ...group,
-    id: uuidv4(),
-  };
-  
-  data.groups.push(newGroup);
+  data.groups.push(group);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // Get the current user's ID
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to save groups');
+  }
+
+  // Save to Supabase
+  try {
+    const { error } = await supabase.from('groups').insert({
+      id: group.id,
+      name: group.name,
+      color: group.color,
+      user_id: user.id, // Add the user_id field
+    });
+
+    if (error) {
+      console.error('Error saving group to Supabase:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to save group to Supabase:', error);
+  }
 };
 
 // Delete a group
-export const deleteGroup = (id: string): void => {
+export const deleteGroup = async (id: string): Promise<void> => {
+  // Delete from localStorage
   const data = initializeStorage();
-  
-  // Move locations to default group
   data.locations = data.locations.map(location => 
     location.groupId === id ? { ...location, groupId: 'default' } : location
   );
-  
-  // Remove group
   data.groups = data.groups.filter(group => group.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // Get the current user's ID
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to delete groups');
+  }
+
+  // Delete from Supabase
+  try {
+    const { error } = await supabase
+      .from('groups')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id); // Ensure we only delete the user's own groups
+
+    if (error) {
+      console.error('Error deleting group from Supabase:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to delete group from Supabase:', error);
+  }
 };
 
 // Export to Excel with separate sheets for each group

@@ -4,15 +4,31 @@ import LocationList from './components/LocationList';
 import ExportButton from './components/ExportButton';
 import ThemeToggle from './components/ThemeToggle';
 import Sidebar from './components/Sidebar';
+import Auth from './components/Auth';
 import { getLocations, deleteAllLocations } from './services/locationService';
 import { Compass, Plus, MapPin, Menu } from 'lucide-react';
 import useDarkMode from './hooks/useDarkMode';
+import { supabase } from './lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'list' | 'new'>('new');
   const [locationCount, setLocationCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isDark, setIsDark } = useDarkMode();
+  const [user, setUser] = useState<User | null>(null);
+  
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   useEffect(() => {
     updateLocationCount();
@@ -33,6 +49,14 @@ function App() {
     updateLocationCount();
     setIsSidebarOpen(false);
   };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (!user) {
+    return <Auth />;
+  }
   
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
@@ -111,7 +135,7 @@ function App() {
         <div className="container mx-auto px-4 text-center">
           <p>MCCI GPS Collector &copy; {new Date().getFullYear()}</p>
           <p className="text-xs sm:text-sm mt-2 text-gray-400">
-            Your data is stored locally on your device only
+            Logged in as {user.email}
           </p>
         </div>
       </footer>
@@ -121,6 +145,7 @@ function App() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onDeleteAll={handleDeleteAll}
+        onSignOut={handleSignOut}
       />
 
       {/* Overlay */}
@@ -134,4 +159,4 @@ function App() {
   );
 }
 
-export default App;
+export default App
