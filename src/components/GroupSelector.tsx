@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Group } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 import { getGroups, saveGroup, deleteGroup } from '../services/locationService';
 import { PlusCircle, Trash2, X, Check } from 'lucide-react';
 
@@ -9,25 +10,42 @@ interface GroupSelectorProps {
 }
 
 const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupSelect }) => {
-  const [groups, setGroups] = useState<Group[]>(() => getGroups());
+  const [groups, setGroups] = useState<Group[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupColor, setNewGroupColor] = useState('#3B82F6');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
-  const handleAddGroup = () => {
+  useEffect(() => {
+    loadGroups();
+  }, []);
+
+  const loadGroups = async () => {
+    try {
+      const fetchedGroups = await getGroups();
+      setGroups(fetchedGroups);
+    } catch (error) {
+      console.error('Error loading groups:', error);
+    }
+  };
+
+  const handleAddGroup = async () => {
     if (newGroupName.trim()) {
       const newGroup: Group = {
-        id: `group-${Date.now()}`,
+        id: uuidv4(),
         name: newGroupName.trim(),
         color: newGroupColor,
       };
       
-      saveGroup(newGroup);
-      setGroups(getGroups());
-      onGroupSelect(newGroup.id);
-      setNewGroupName('');
-      setShowAddForm(false);
+      try {
+        await saveGroup(newGroup);
+        await loadGroups();
+        onGroupSelect(newGroup.id);
+        setNewGroupName('');
+        setShowAddForm(false);
+      } catch (error) {
+        console.error('Error saving group:', error);
+      }
     }
   };
 
@@ -35,18 +53,22 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
     setShowDeleteConfirm(groupId);
   };
 
-  const handleDeleteConfirm = (groupId: string) => {
+  const handleDeleteConfirm = async (groupId: string) => {
     if (groupId === 'default') {
       alert('Cannot delete the default group');
       return;
     }
     
-    deleteGroup(groupId);
-    setGroups(getGroups());
-    if (selectedGroupId === groupId) {
-      onGroupSelect('default');
+    try {
+      await deleteGroup(groupId);
+      await loadGroups();
+      if (selectedGroupId === groupId) {
+        onGroupSelect('default');
+      }
+      setShowDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting group:', error);
     }
-    setShowDeleteConfirm(null);
   };
 
   return (
@@ -113,7 +135,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
               onClick={() => onGroupSelect(group.id)}
               className={`px-4 py-2 rounded-l-full text-sm font-medium transition-all ${
                 selectedGroupId === group.id
-                  ? 'bg-opacity-100 text-gray-500'
+                  ? 'bg-opacity-100 text-gray-100'
                   : 'bg-opacity-20 hover:bg-opacity-30 text-gray-800 dark:text-gray-200'
               }`}
               style={{

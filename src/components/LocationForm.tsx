@@ -165,13 +165,13 @@ const LocationForm: React.FC<LocationFormProps> = ({ onLocationSaved }) => {
             <div>
               <p className="text-xl text-gray-500 dark:text-gray-400 mb-1">Latitude</p>
               <div className="font-mono text-xl font-medium dark:text-white">
-                {currentPosition[0].toFixed(6)}
+                {currentPosition[0].toFixed(7)}
               </div>
             </div>
             <div>
               <p className="text-xl text-gray-500 dark:text-gray-400 mb-1">Longitude</p>
               <div className="font-mono text-xl font-medium dark:text-white">
-                {currentPosition[1].toFixed(6)}
+                {currentPosition[1].toFixed(7)}
               </div>
             </div>
           </div>

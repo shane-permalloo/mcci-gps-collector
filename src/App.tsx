@@ -65,7 +65,7 @@ function App() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Compass size={24} className="mr-2 shrink-0" />
+              <MapPin size={24} className="mr-2 shrink-0" />
               <h1 className="text-xl sm:text-2xl font-bold">MCCI GPS</h1>
             </div>
             <div className="flex items-center gap-4">

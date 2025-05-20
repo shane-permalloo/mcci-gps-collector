@@ -23,14 +23,26 @@ const LocationList: React.FC = () => {
     filterAndSortLocations();
   }, [locations, filterGroupId, sortOrder, searchTerm]);
   
-  const loadData = () => {
-    setLocations(getLocations());
-    setGroups(getGroups());
+  const loadData = async () => {
+    try {
+      const [locationsData, groupsData] = await Promise.all([
+        getLocations(),
+        getGroups()
+      ]);
+      setLocations(locationsData);
+      setGroups(groupsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
   };
   
-  const handleDeleteLocation = (id: string) => {
-    deleteLocation(id);
-    loadData();
+  const handleDeleteLocation = async (id: string) => {
+    try {
+      await deleteLocation(id);
+      await loadData(); // Reload data after deletion
+    } catch (error) {
+      console.error('Error deleting location:', error);
+    }
   };
   
   const filterAndSortLocations = () => {
@@ -44,8 +56,8 @@ const LocationList: React.FC = () => {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(location => 
         location.title.toLowerCase().includes(term) || 
-        location.description.toLowerCase().includes(term) ||
-        location.tags.some(tag => tag.toLowerCase().includes(term))
+        location.description?.toLowerCase().includes(term) ||
+        location.tags?.some(tag => tag.toLowerCase().includes(term))
       );
     }
     
