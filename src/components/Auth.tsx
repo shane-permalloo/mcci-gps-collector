@@ -165,22 +165,13 @@ const Auth: React.FC = () => {
               </div>
             )}
 
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-4">
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Loading...' : 'Sign in'}
-              </button>
-              
-              <button
-                type="button"
-                onClick={handleSignUp}
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
-              >
-                {loading ? 'Loading...' : 'Sign up'}
               </button>
             </div>
           </form>
