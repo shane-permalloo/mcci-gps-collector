@@ -9,6 +9,8 @@ const LocationList: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [filteredLocations, setFilteredLocations] = useState<Location[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
@@ -24,6 +26,7 @@ const LocationList: React.FC = () => {
   }, [locations, filterGroupId, sortOrder, searchTerm]);
   
   const loadData = async () => {
+    setIsLoading(true);
     try {
       const [locationsData, groupsData] = await Promise.all([
         getLocations(),
@@ -33,15 +36,20 @@ const LocationList: React.FC = () => {
       setGroups(groupsData);
     } catch (error) {
       console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   const handleDeleteLocation = async (id: string) => {
+    setIsDeleting(true);
     try {
       await deleteLocation(id);
-      await loadData(); // Reload data after deletion
+      await loadData();
     } catch (error) {
       console.error('Error deleting location:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -79,6 +87,15 @@ const LocationList: React.FC = () => {
   const getGroupById = (id: string): Group => {
     return groups.find(group => group.id === id) || { id: 'unknown', name: 'Unknown', color: '#ccc' };
   };
+
+  const LoadingPlaceholder = () => (
+    <div className="flex items-center justify-center py-8">
+      <div className="animate-pulse flex space-x-4">
+        <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-24"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-24"></div>
+      </div>
+    </div>
+  );
   
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
@@ -161,7 +178,9 @@ const LocationList: React.FC = () => {
         </div>
       </div>
       
-      {filteredLocations.length === 0 ? (
+      {isLoading || isDeleting ? (
+        <LoadingPlaceholder />
+      ) : filteredLocations.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <p className="text-gray-600 dark:text-gray-400">No locations saved yet.</p>
         </div>

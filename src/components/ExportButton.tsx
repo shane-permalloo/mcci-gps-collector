@@ -9,8 +9,8 @@ const ExportButton: React.FC = () => {
     try {
       setIsExporting(true);
       
-      const locations = getLocations();
-      const groups = getGroups();
+      const locations = await getLocations();
+      const groups = await getGroups() || [];
       
       if (locations.length === 0) {
         alert('No locations to export. Save some locations first!');

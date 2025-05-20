@@ -15,17 +15,23 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupColor, setNewGroupColor] = useState('#3B82F6');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadGroups();
   }, []);
 
   const loadGroups = async () => {
+    setIsLoading(true);
     try {
       const fetchedGroups = await getGroups();
       setGroups(fetchedGroups);
     } catch (error) {
       console.error('Error loading groups:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -37,6 +43,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
         color: newGroupColor,
       };
       
+      setIsSaving(true);
       try {
         await saveGroup(newGroup);
         await loadGroups();
@@ -45,6 +52,8 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
         setShowAddForm(false);
       } catch (error) {
         console.error('Error saving group:', error);
+      } finally {
+        setIsSaving(false);
       }
     }
   };
@@ -59,6 +68,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
       return;
     }
     
+    setIsDeleting(true);
     try {
       await deleteGroup(groupId);
       await loadGroups();
@@ -68,8 +78,19 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
       setShowDeleteConfirm(null);
     } catch (error) {
       console.error('Error deleting group:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
+
+  const LoadingPlaceholder = () => (
+    <div className="flex items-center justify-center py-4">
+      <div className="animate-pulse flex space-x-4">
+        <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-24"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-24"></div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="mb-6">
@@ -115,80 +136,86 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
             <button
               onClick={() => setShowAddForm(false)}
               className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md transition-colors"
+              disabled={isSaving}
             >
               Cancel
             </button>
             <button
               onClick={handleAddGroup}
-              className="px-4 py-2 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+              disabled={isSaving}
+              className="px-4 py-2 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add Group
+              {isSaving ? 'Adding...' : 'Add Group'}
             </button>
           </div>
         </div>
       )}
       
-      <div className="flex flex-wrap gap-2">
-        {groups.map((group) => (
-          <div key={group.id} className="flex items-center">
-            <button
-              onClick={() => onGroupSelect(group.id)}
-              className={`px-4 py-2 rounded-l-full text-sm font-medium transition-all ${
-                selectedGroupId === group.id
-                  ? 'bg-opacity-100 text-gray-100'
-                  : 'bg-opacity-20 hover:bg-opacity-30 text-gray-800 dark:text-gray-200'
-              }`}
-              style={{
-                backgroundColor: selectedGroupId === group.id ? group.color : `${group.color}30`,
-                borderWidth: '1px',
-                borderColor: group.color,
-                borderRightWidth: group.id === 'default' ? '1px' : '0',
-                borderRadius: group.id === 'default' ? '9999px' : undefined,
-              }}
-            >
-              {group.name}
-            </button>
-            {group.id !== 'default' && (
-              <div className="relative">
-                {showDeleteConfirm === group.id ? (
-                  <div className="flex">
+      {isLoading || isDeleting ? (
+        <LoadingPlaceholder />
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {groups.map((group) => (
+            <div key={group.id} className="flex items-center">
+              <button
+                onClick={() => onGroupSelect(group.id)}
+                className={`px-4 py-2 rounded-l-full text-sm font-medium transition-all ${
+                  selectedGroupId === group.id
+                    ? 'bg-opacity-100 text-gray-100'
+                    : 'bg-opacity-20 hover:bg-opacity-30 text-gray-800 dark:text-gray-200'
+                }`}
+                style={{
+                  backgroundColor: selectedGroupId === group.id ? group.color : `${group.color}30`,
+                  borderWidth: '1px',
+                  borderColor: group.color,
+                  borderRightWidth: group.id === 'default' ? '1px' : '0',
+                  borderRadius: group.id === 'default' ? '9999px' : undefined,
+                }}
+              >
+                {group.name}
+              </button>
+              {group.id !== 'default' && (
+                <div className="relative">
+                  {showDeleteConfirm === group.id ? (
+                    <div className="flex">
+                      <button
+                        onClick={() => setShowDeleteConfirm(null)}
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors border border-l-0"
+                        style={{ borderColor: group.color }}
+                      >
+                        <X size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteConfirm(group.id)}
+                        className="p-2 rounded-r-full text-red-500 hover:text-red-700 transition-colors border border-l-0"
+                        style={{ borderColor: group.color }}
+                      >
+                        <Check size={14} />
+                      </button>
+                    </div>
+                  ) : (
                     <button
-                      onClick={() => setShowDeleteConfirm(null)}
-                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors border border-l-0"
-                      style={{ borderColor: group.color }}
+                      onClick={() => handleDeleteClick(group.id)}
+                      className={`p-2 rounded-r-full transition-all border border-l-0 hover:bg-red-50 dark:hover:bg-red-900/20 ${
+                        selectedGroupId === group.id
+                          ? 'text-white bg-opacity-100'
+                          : 'text-red-500 bg-opacity-20'
+                      }`}
+                      style={{
+                        backgroundColor: selectedGroupId === group.id ? group.color : undefined,
+                        borderColor: group.color,
+                      }}
+                      title="Delete group"
                     >
-                      <X size={14} />
+                      <Trash2 size={18} />
                     </button>
-                    <button
-                      onClick={() => handleDeleteConfirm(group.id)}
-                      className="p-2 rounded-r-full text-red-500 hover:text-red-700 transition-colors border border-l-0"
-                      style={{ borderColor: group.color }}
-                    >
-                      <Check size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleDeleteClick(group.id)}
-                    className={`p-2 rounded-r-full transition-all border border-l-0 hover:bg-red-50 dark:hover:bg-red-900/20 ${
-                      selectedGroupId === group.id
-                        ? 'text-white bg-opacity-100'
-                        : 'text-red-500 bg-opacity-20'
-                    }`}
-                    style={{
-                      backgroundColor: selectedGroupId === group.id ? group.color : undefined,
-                      borderColor: group.color,
-                    }}
-                    title="Delete group"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
