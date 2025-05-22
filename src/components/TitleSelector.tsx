@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getImportedLocations } from '../services/locationService';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 
 interface ImportedLocation {
   id: number;
@@ -17,6 +17,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddNew, setShowAddNew] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,6 +34,18 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setSearchTerm(value);
+  }, [value]);
+
+  useEffect(() => {
+    // Show "Add New" option if searchTerm doesn't match any existing titles
+    const hasMatch = importedLocations.some(
+      loc => loc.title.toLowerCase() === searchTerm.toLowerCase()
+    );
+    setShowAddNew(!hasMatch && searchTerm.trim().length > 0);
+  }, [searchTerm, importedLocations]);
+
   const loadImportedLocations = async () => {
     try {
       const locations = await getImportedLocations();
@@ -48,6 +61,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
     const newValue = event.target.value;
     setSearchTerm(newValue);
     onTitleSelect(newValue);
+    setIsOpen(true);
   };
 
   const handleTitleSelect = (title: string) => {
@@ -56,11 +70,16 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
     setIsOpen(false);
   };
 
+  const handleAddNew = () => {
+    handleTitleSelect(searchTerm.trim());
+    setIsOpen(false);
+  };
+
   const filteredLocations = importedLocations.filter(location =>
     location.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const showDropdown = isOpen && (filteredLocations.length > 0 || !importedLocations.some(loc => loc.title === searchTerm));
+  const showDropdown = isOpen && searchTerm.trim().length > 0;
 
   if (isLoading) {
     return (
@@ -78,13 +97,22 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
-          className="w-full px-4 py-2 pl-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+          className="w-full px-4 py-2 pl-10 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
           placeholder="Search or enter new title"
         />
         <Search 
           size={18} 
           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
         />
+        {showAddNew && (
+          <button
+            onClick={handleAddNew}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+            title="Add as new title"
+          >
+            <Plus size={18} />
+          </button>
+        )}
       </div>
 
       {showDropdown && (
@@ -95,7 +123,9 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
                 <li
                   key={location.id}
                   className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
-                    location.title === searchTerm ? 'bg-gray-100 dark:bg-gray-600' : ''
+                    location.title.toLowerCase() === searchTerm.toLowerCase()
+                      ? 'bg-gray-100 dark:bg-gray-600'
+                      : ''
                   }`}
                   onClick={() => handleTitleSelect(location.title)}
                 >
@@ -104,8 +134,15 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
               ))}
             </ul>
           ) : (
-            <div className="px-4 py-2 text-gray-500 dark:text-gray-400">
-              Press Enter to add "{searchTerm}" as a new title
+            <div className="px-4 py-2 text-gray-500 dark:text-gray-400 flex items-center justify-between">
+              <span>No matching titles found</span>
+              <button
+                onClick={handleAddNew}
+                className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
+              >
+                <Plus size={16} className="mr-1" />
+                Add New
+              </button>
             </div>
           )}
         </div>
