@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Location } from '../types';
 import useGeolocation from '../hooks/useGeolocation';
 import GroupSelector from './GroupSelector';
+import TitleSelector from './TitleSelector';
 import { saveLocation } from '../services/locationService';
 import { MapPin, Tag, Save, RefreshCw, Crosshair, Map as MapIcon } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -124,25 +125,28 @@ const LocationForm: React.FC<LocationFormProps> = ({ onLocationSaved }) => {
       
       <div className="space-y-4">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              setTitleError(false);
-            }}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 ${
-              titleError ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="Enter a title for this location"
-          />
-          {titleError && (
-            <p className="mt-1 text-sm text-red-500">Title is required</p>
-          )}
+          <TitleSelector onTitleSelect={setTitle} value={title} />
+          <div className="mt-2">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setTitleError(false);
+              }}
+              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 ${
+                titleError ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Enter a title for this location"
+            />
+            {titleError && (
+              <p className="mt-1 text-sm text-red-500">Title is required</p>
+            )}
+          </div>
         </div>
         
         <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 relative overflow-hidden">
@@ -209,7 +213,8 @@ const LocationForm: React.FC<LocationFormProps> = ({ onLocationSaved }) => {
                   </div>
                   <button
                     onClick={handleRecenterPosition}
-                    className="absolute top-4 right-4 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" style={{ zIndex: 400 }}
+                    className="absolute top-4 right-4 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    style={{ zIndex: 400 }}
                     title="Recenter to current position"
                   >
                     <Crosshair size={20} className="text-blue-600 dark:text-blue-400" />

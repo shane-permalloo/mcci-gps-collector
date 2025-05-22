@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import LocationForm from './components/LocationForm';
 import LocationList from './components/LocationList';
 import ExportButton from './components/ExportButton';
@@ -34,9 +34,13 @@ function App() {
     updateLocationCount();
   }, []);
   
-  const updateLocationCount = () => {
-    const locations = getLocations();
-    setLocationCount(locations.length);
+  const updateLocationCount = async () => {
+    try {
+      const locations = await getLocations();
+      setLocationCount(locations.length);
+    } catch (error) {
+      console.error('Error updating location count:', error);
+    }
   };
   
   const handleLocationSaved = () => {
@@ -69,8 +73,9 @@ function App() {
               <h1 className="text-xl sm:text-2xl font-bold">MCCI GPS</h1>
             </div>
             <div className="flex items-center gap-4">
-              <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
               <ExportButton />
+              <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
+
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="p-2 hover:bg-blue-700 dark:hover:bg-blue-700 rounded-full transition-colors"
@@ -159,4 +164,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

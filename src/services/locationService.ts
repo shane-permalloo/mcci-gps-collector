@@ -49,7 +49,8 @@ export const saveLocation = async (location: Location): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase.from("locations").insert({
+    // Start a transaction
+    const { error: locationError } = await supabase.from("locations").insert({
       id: location.id,
       title: location.title,
       latitude: location.latitude,
@@ -61,12 +62,22 @@ export const saveLocation = async (location: Location): Promise<void> => {
       user_id: user.id,
     });
 
-    if (error) {
-      console.error("Error saving to Supabase:", error);
-      throw error;
+    if (locationError) {
+      throw locationError;
+    }
+
+    // Add to imported_locations if it doesn't exist
+    const { error: importError } = await supabase
+      .from("imported_locations")
+      .insert({ title: location.title })
+      .select()
+      .maybeSingle();
+
+    if (importError && !importError.message.includes('duplicate')) {
+      throw importError;
     }
   } catch (error) {
-    console.error("Failed to save to Supabase:", error);
+    console.error("Failed to save location:", error);
     throw error;
   }
 };
@@ -167,7 +178,6 @@ export const getGroups = async (): Promise<Group[]> => {
       throw error;
     }
 
-    // Always include the default group and combine with fetched groups
     return [
       DEFAULT_GROUPS[0],
       ...(groups || []).map(group => ({
@@ -218,7 +228,6 @@ export const deleteGroup = async (id: string): Promise<void> => {
     const { error } = await supabase
       .from("groups")
       .delete()
-      .eq("id", id)
       .eq("user_id", user.id);
 
     if (error) {
@@ -231,7 +240,26 @@ export const deleteGroup = async (id: string): Promise<void> => {
   }
 };
 
-// Export to Excel with separate sheets for each group
+// Get imported locations
+export const getImportedLocations = async (): Promise<string[]> => {
+  try {
+    const { data: importedLocations, error } = await supabase
+      .from("imported_locations")
+      .select("title");
+
+    if (error) {
+      console.error("Error fetching imported locations:", error);
+      throw error;
+    }
+
+    return importedLocations.map(location => location.title);
+  } catch (error) {
+    console.error("Failed to fetch imported locations:", error);
+    throw error;
+  }
+};
+
+// Export to Excel
 export const exportToExcel = async (
   locations: Location[],
   groups: Group[],

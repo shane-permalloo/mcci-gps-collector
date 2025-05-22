@@ -165,7 +165,7 @@ const Auth: React.FC = () => {
               </div>
             )}
 
-            <div className="flex flex-col space-y-4">
+            <div className="flex flex-col space-y-3">
               <button
                 type="submit"
                 disabled={loading}
@@ -173,6 +173,8 @@ const Auth: React.FC = () => {
               >
                 {loading ? 'Loading...' : 'Sign in'}
               </button>
+              
+              
             </div>
           </form>
         </div>

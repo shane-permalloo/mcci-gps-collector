@@ -47,9 +47,15 @@ CREATE TABLE IF NOT EXISTS locations (
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL
 );
 
+-- Create imported_locations table
+CREATE TABLE IF NOT EXISTS imported_locations (
+  title TEXT NOT NULL
+);
+
 -- Enable RLS
 ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE imported_locations ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for groups
 CREATE POLICY "Users can manage their own groups"
@@ -62,6 +68,14 @@ CREATE POLICY "Users can manage their own groups"
 -- Create policies for locations
 CREATE POLICY "Users can manage their own locations"
   ON locations
+  FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Create policy for imported_locations
+CREATE POLICY "Users can manage their own imported_locations"
+  ON imported_locations
   FOR ALL
   TO authenticated
   USING (auth.uid() = user_id)
