@@ -9,11 +9,6 @@ const DEFAULT_GROUPS: Group[] = [
 
 // Get all locations
 export const getLocations = async (): Promise<Location[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User must be authenticated to get locations");
-  }
-
   try {
     const { data: locations, error } = await supabase
       .from("locations")
@@ -106,7 +101,8 @@ export const updateLocation = async (location: Location): Promise<void> => {
         tags: location.tags,
         group_id: location.groupId === "default" ? null : location.groupId,
       })
-      .eq("id", location.id);
+      .eq("id", location.id)
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error updating in Supabase:", error);
@@ -129,7 +125,8 @@ export const deleteLocation = async (id: string): Promise<void> => {
     const { error } = await supabase
       .from("locations")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error deleting from Supabase:", error);
@@ -151,7 +148,8 @@ export const deleteAllLocations = async (): Promise<void> => {
   try {
     const { error } = await supabase
       .from("locations")
-      .delete();
+      .delete()
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error deleting all from Supabase:", error);
@@ -165,11 +163,6 @@ export const deleteAllLocations = async (): Promise<void> => {
 
 // Get all groups
 export const getGroups = async (): Promise<Group[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User must be authenticated to get groups");
-  }
-
   try {
     const { data: groups, error } = await supabase
       .from("groups")
@@ -230,7 +223,8 @@ export const deleteGroup = async (id: string): Promise<void> => {
     const { error } = await supabase
       .from("groups")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error deleting group from Supabase:", error);
@@ -287,6 +281,7 @@ export const exportToExcel = async (
       { header: "Description", key: "description", width: 40 },
       { header: "Tags", key: "tags", width: 40 },
       { header: "Created At", key: "createdAt", width: 20 },
+      { header: "User ID", key: "userId", width: 50 },
     ];
 
     // Style the header row
@@ -295,7 +290,7 @@ export const exportToExcel = async (
 
     // Add locations for this group
     const groupLocations = locations.filter((loc) => loc.groupId === group.id);
-    groupLocations.forEach((location) => {
+    groupLocations.forEach((location: any) => {
       const groupName = groups.find(g => g.id === location.groupId)?.name || 'Default';
       sheet.addRow({
         id: location.id,
@@ -305,13 +300,14 @@ export const exportToExcel = async (
         description: location.description,
         tags: location.tags.join(", "),
         createdAt: new Date(location.createdAt).toLocaleString(),
+        userId: location.user_id,
       });
     });
 
     // Auto-filter
     sheet.autoFilter = {
       from: { row: 1, column: 1 },
-      to: { row: 1, column: 6 },
+      to: { row: 1, column: 8 },
     };
   }
 
