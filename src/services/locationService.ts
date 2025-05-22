@@ -17,8 +17,7 @@ export const getLocations = async (): Promise<Location[]> => {
   try {
     const { data: locations, error } = await supabase
       .from("locations")
-      .select("*")
-      .eq("user_id", user.id);
+      .select("*");
 
     if (error) {
       console.error("Error fetching locations:", error);
@@ -107,8 +106,7 @@ export const updateLocation = async (location: Location): Promise<void> => {
         tags: location.tags,
         group_id: location.groupId === "default" ? null : location.groupId,
       })
-      .eq("id", location.id)
-      .eq("user_id", user.id);
+      .eq("id", location.id);
 
     if (error) {
       console.error("Error updating in Supabase:", error);
@@ -131,8 +129,7 @@ export const deleteLocation = async (id: string): Promise<void> => {
     const { error } = await supabase
       .from("locations")
       .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("id", id);
 
     if (error) {
       console.error("Error deleting from Supabase:", error);
@@ -154,8 +151,7 @@ export const deleteAllLocations = async (): Promise<void> => {
   try {
     const { error } = await supabase
       .from("locations")
-      .delete()
-      .eq("user_id", user.id);
+      .delete();
 
     if (error) {
       console.error("Error deleting all from Supabase:", error);
@@ -177,8 +173,7 @@ export const getGroups = async (): Promise<Group[]> => {
   try {
     const { data: groups, error } = await supabase
       .from("groups")
-      .select("*")
-      .eq("user_id", user.id);
+      .select("*");
 
     if (error) {
       console.error("Error fetching groups:", error);
@@ -235,8 +230,7 @@ export const deleteGroup = async (id: string): Promise<void> => {
     const { error } = await supabase
       .from("groups")
       .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("id", id);
 
     if (error) {
       console.error("Error deleting group from Supabase:", error);
@@ -286,30 +280,28 @@ export const exportToExcel = async (
 
     // Set up headers
     sheet.columns = [
-      { header: "Title", key: "title", width: 30 },
-      { header: "Latitude", key: "latitude", width: 15 },
-      { header: "Longitude", key: "longitude", width: 15 },
+      { header: "Id", key: "id", width: 50 },
+      { header: "Title", key: "title", width: 50 },
+      { header: "Coordinates", key: "coordinates", width: 50 },
+      { header: "Mall", key: "mall", width: 50 },
       { header: "Description", key: "description", width: 40 },
-      { header: "Tags", key: "tags", width: 30 },
+      { header: "Tags", key: "tags", width: 40 },
       { header: "Created At", key: "createdAt", width: 20 },
     ];
 
     // Style the header row
     const headerRow = sheet.getRow(1);
     headerRow.font = { bold: true };
-    headerRow.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: group.color.replace("#", "") + "CC" },
-    };
 
     // Add locations for this group
     const groupLocations = locations.filter((loc) => loc.groupId === group.id);
     groupLocations.forEach((location) => {
+      const groupName = groups.find(g => g.id === location.groupId)?.name || 'Default';
       sheet.addRow({
+        id: location.id,
         title: location.title,
-        latitude: location.latitude,
-        longitude: location.longitude,
+        coordinates: `[${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}]`,
+        mall: groupName,
         description: location.description,
         tags: location.tags.join(", "),
         createdAt: new Date(location.createdAt).toLocaleString(),

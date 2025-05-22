@@ -5,19 +5,19 @@ import { Location, Group } from '../types';
  */
 export const locationsToCSV = (locations: Location[], groups: Group[]): string => {
   // Create headers
-  const headers = ['Title', 'Latitude', 'Longitude', 'Description', 'Tags', 'Group', 'Created At'];
+  const headers = ['Shop_name', 'Shop_location.coordinates', 'Shop_malls', 'Description', 'Tags', 'Created At'];
   
   // Map locations to rows
   const rows = locations.map(location => {
-    const group = groups.find(g => g.id === location.groupId)?.name || 'Ungrouped';
+    const group = [{""Malls_id"":{""mall_name"":groups.find(g => g.id === location.groupId)?.name}}] || 'Ungrouped';
     const date = new Date(location.createdAt).toLocaleString();
+    const coordinates = [location.longitude.toFixed(7), location.latitude.toFixed(7)];
     return [
       location.title,
-      location.latitude.toFixed(6),
-      location.longitude.toFixed(6),
+      coordinates,
+      group,
       location.description,
       location.tags.join(', '),
-      group,
       date
     ];
   });
