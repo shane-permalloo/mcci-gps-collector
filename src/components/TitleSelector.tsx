@@ -122,7 +122,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
               {filteredLocations.map((location) => (
                 <li
                   key={location.id}
-                  className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                  className={`px-4 py-2 cursor-pointer text-gray-600 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 ${
                     location.title.toLowerCase() === searchTerm.toLowerCase()
                       ? 'bg-gray-100 dark:bg-gray-600'
                       : ''
