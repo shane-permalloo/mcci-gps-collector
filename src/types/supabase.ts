@@ -67,6 +67,20 @@ export interface Database {
           user_id?: string
         }
       }
+      imported_locations: {
+        Row: {
+          id: number
+          title: string
+        }
+        Insert: {
+          id?: number
+          title: string
+        }
+        Update: {
+          id?: number
+          title?: string
+        }
+      }
     }
   }
 }

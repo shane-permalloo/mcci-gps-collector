@@ -49,7 +49,7 @@ export const saveLocation = async (location: Location): Promise<void> => {
   }
 
   try {
-    // Start a transaction
+    // Save the location
     const { error: locationError } = await supabase.from("locations").insert({
       id: location.id,
       title: location.title,
@@ -66,13 +66,20 @@ export const saveLocation = async (location: Location): Promise<void> => {
       throw locationError;
     }
 
+    // Generate a random 3-digit ID for imported_locations
+    const randomId = Math.floor(Math.random() * (999 - 100 + 1)) + 100;
+
     // Add to imported_locations if it doesn't exist
     const { error: importError } = await supabase
       .from("imported_locations")
-      .insert({ title: location.title })
+      .insert({ 
+        id: randomId,
+        title: location.title 
+      })
       .select()
       .maybeSingle();
 
+    // Ignore duplicate title errors
     if (importError && !importError.message.includes('duplicate')) {
       throw importError;
     }
@@ -228,6 +235,7 @@ export const deleteGroup = async (id: string): Promise<void> => {
     const { error } = await supabase
       .from("groups")
       .delete()
+      .eq("id", id)
       .eq("user_id", user.id);
 
     if (error) {
@@ -240,19 +248,25 @@ export const deleteGroup = async (id: string): Promise<void> => {
   }
 };
 
+interface ImportedLocation {
+  id: number;
+  title: string;
+}
+
 // Get imported locations
-export const getImportedLocations = async (): Promise<string[]> => {
+export const getImportedLocations = async (): Promise<ImportedLocation[]> => {
   try {
     const { data: importedLocations, error } = await supabase
       .from("imported_locations")
-      .select("title");
+      .select("id, title")
+      .order('title');
 
     if (error) {
       console.error("Error fetching imported locations:", error);
       throw error;
     }
 
-    return importedLocations.map(location => location.title);
+    return importedLocations;
   } catch (error) {
     console.error("Failed to fetch imported locations:", error);
     throw error;

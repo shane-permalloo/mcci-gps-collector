@@ -2,20 +2,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getImportedLocations } from '../services/locationService';
 import { Search } from 'lucide-react';
 
+interface ImportedLocation {
+  id: number;
+  title: string;
+}
+
 interface TitleSelectorProps {
   onTitleSelect: (title: string) => void;
   value: string;
 }
 
 const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) => {
-  const [importedTitles, setImportedTitles] = useState<string[]>([]);
+  const [importedLocations, setImportedLocations] = useState<ImportedLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadImportedTitles();
+    loadImportedLocations();
 
     // Close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
@@ -28,12 +33,12 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const loadImportedTitles = async () => {
+  const loadImportedLocations = async () => {
     try {
-      const titles = await getImportedLocations();
-      setImportedTitles(titles);
+      const locations = await getImportedLocations();
+      setImportedLocations(locations);
     } catch (error) {
-      console.error('Error loading imported titles:', error);
+      console.error('Error loading imported locations:', error);
     } finally {
       setIsLoading(false);
     }
@@ -51,11 +56,11 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
     setIsOpen(false);
   };
 
-  const filteredTitles = importedTitles.filter(title =>
-    title.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLocations = importedLocations.filter(location =>
+    location.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const showDropdown = isOpen && (filteredTitles.length > 0 || !importedTitles.includes(searchTerm));
+  const showDropdown = isOpen && (filteredLocations.length > 0 || !importedLocations.some(loc => loc.title === searchTerm));
 
   if (isLoading) {
     return (
@@ -84,17 +89,17 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
 
       {showDropdown && (
         <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
-          {filteredTitles.length > 0 ? (
+          {filteredLocations.length > 0 ? (
             <ul className="py-1">
-              {filteredTitles.map((title) => (
+              {filteredLocations.map((location) => (
                 <li
-                  key={title}
+                  key={location.id}
                   className={`px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 ${
-                    title === searchTerm ? 'bg-gray-100 dark:bg-gray-600' : ''
+                    location.title === searchTerm ? 'bg-gray-100 dark:bg-gray-600' : ''
                   }`}
-                  onClick={() => handleTitleSelect(title)}
+                  onClick={() => handleTitleSelect(location.title)}
                 >
-                  {title}
+                  {location.title}
                 </li>
               ))}
             </ul>
