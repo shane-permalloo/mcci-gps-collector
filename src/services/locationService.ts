@@ -1,24 +1,21 @@
 import { Location, Group } from "../types";
-import { v4 as uuidv4 } from "uuid";
 import * as Excel from "exceljs";
 import { supabase } from "../lib/supabase";
 
 const DEFAULT_GROUPS: Group[] = [
-  { id: "default", name: "Default", color: "#252525" },
+  { id: "default", name: "Default", color: "25252500" },
 ];
 
 // Get all locations
 export const getLocations = async (): Promise<Location[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User must be authenticated to get locations");
-  }
-
   try {
+    // Get the current user first
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+
     const { data: locations, error } = await supabase
       .from("locations")
-      .select("*")
-      .eq("user_id", user.id);
+      .select("*");
 
     if (error) {
       console.error("Error fetching locations:", error);
@@ -33,7 +30,9 @@ export const getLocations = async (): Promise<Location[]> => {
       description: location.description || "",
       tags: location.tags || [],
       groupId: location.group_id || "default",
-      createdAt: new Date(location.created_at).getTime()
+      userId: location.user_id,
+      createdAt: new Date(location.created_at).getTime(),
+      isOwner: currentUserId === location.user_id
     }));
   } catch (error) {
     console.error("Failed to fetch locations:", error);
@@ -49,7 +48,8 @@ export const saveLocation = async (location: Location): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase.from("locations").insert({
+    // Save the location
+    const { error: locationError } = await supabase.from("locations").insert({
       id: location.id,
       title: location.title,
       latitude: location.latitude,
@@ -61,12 +61,29 @@ export const saveLocation = async (location: Location): Promise<void> => {
       user_id: user.id,
     });
 
-    if (error) {
-      console.error("Error saving to Supabase:", error);
-      throw error;
+    if (locationError) {
+      throw locationError;
+    }
+
+    // Generate a random 3-digit ID for imported_locations
+    const randomId = Math.floor(Math.random() * (999 - 100 + 1)) + 100;
+
+    // Add to imported_locations if it doesn't exist
+    const { error: importError } = await supabase
+      .from("imported_locations")
+      .insert({ 
+        id: randomId,
+        title: location.title 
+      })
+      .select()
+      .maybeSingle();
+
+    // Ignore duplicate title errors
+    if (importError && !importError.message.includes('duplicate')) {
+      throw importError;
     }
   } catch (error) {
-    console.error("Failed to save to Supabase:", error);
+    console.error("Failed to save location:", error);
     throw error;
   }
 };
@@ -93,11 +110,11 @@ export const updateLocation = async (location: Location): Promise<void> => {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error updating in Supabase:", error);
+      console.error("Error updating in the database:", error);
       throw error;
     }
   } catch (error) {
-    console.error("Failed to update in Supabase:", error);
+    console.error("Failed to update in the database:", error);
     throw error;
   }
 };
@@ -117,11 +134,11 @@ export const deleteLocation = async (id: string): Promise<void> => {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error deleting from Supabase:", error);
+      console.error("Error deleting from the database:", error);
       throw error;
     }
   } catch (error) {
-    console.error("Failed to delete from Supabase:", error);
+    console.error("Failed to delete from the database:", error);
     throw error;
   }
 };
@@ -130,7 +147,7 @@ export const deleteLocation = async (id: string): Promise<void> => {
 export const deleteAllLocations = async (): Promise<void> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User must be authenticated to delete all locations");
+    throw new Error("User must be authenticated to delete all his saved locations");
   }
 
   try {
@@ -140,40 +157,39 @@ export const deleteAllLocations = async (): Promise<void> => {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error deleting all from Supabase:", error);
+      console.error("Error deleting all from the database:", error);
       throw error;
     }
   } catch (error) {
-    console.error("Failed to delete all from Supabase:", error);
+    console.error("Failed to delete all from the database:", error);
     throw error;
   }
 };
 
 // Get all groups
 export const getGroups = async (): Promise<Group[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User must be authenticated to get groups");
-  }
-
   try {
+    // Get the current user first
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+
     const { data: groups, error } = await supabase
       .from("groups")
-      .select("*")
-      .eq("user_id", user.id);
+      .select("*");
 
     if (error) {
       console.error("Error fetching groups:", error);
       throw error;
     }
 
-    // Always include the default group and combine with fetched groups
     return [
-      DEFAULT_GROUPS[0],
+      // Default group is always considered owned by the current user
+      { ...DEFAULT_GROUPS[0], isOwner: true },
       ...(groups || []).map(group => ({
         id: group.id,
         name: group.name,
-        color: group.color
+        color: group.color,
+        isOwner: currentUserId === group.user_id
       }))
     ];
   } catch (error) {
@@ -198,11 +214,11 @@ export const saveGroup = async (group: Group): Promise<void> => {
     });
 
     if (error) {
-      console.error("Error saving group to Supabase:", error);
+      console.error("Error saving group to the database:", error);
       throw error;
     }
   } catch (error) {
-    console.error("Failed to save group to Supabase:", error);
+    console.error("Failed to save group to the database:", error);
     throw error;
   }
 };
@@ -222,16 +238,41 @@ export const deleteGroup = async (id: string): Promise<void> => {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error deleting group from Supabase:", error);
+      console.error("Error deleting group from the database:", error);
       throw error;
     }
   } catch (error) {
-    console.error("Failed to delete group from Supabase:", error);
+    console.error("Failed to delete group from the database:", error);
     throw error;
   }
 };
 
-// Export to Excel with separate sheets for each group
+interface ImportedLocation {
+  id: number;
+  title: string;
+}
+
+// Get imported locations
+export const getImportedLocations = async (): Promise<ImportedLocation[]> => {
+  try {
+    const { data: importedLocations, error } = await supabase
+      .from("imported_locations")
+      .select("id, title")
+      .order('title');
+
+    if (error) {
+      console.error("Error fetching imported locations:", error);
+      throw error;
+    }
+
+    return importedLocations;
+  } catch (error) {
+    console.error("Failed to fetch imported locations:", error);
+    throw error;
+  }
+};
+
+// Export to Excel
 export const exportToExcel = async (
   locations: Location[],
   groups: Group[],
@@ -244,40 +285,38 @@ export const exportToExcel = async (
 
     // Set up headers
     sheet.columns = [
-      { header: "Title", key: "title", width: 30 },
-      { header: "Latitude", key: "latitude", width: 15 },
-      { header: "Longitude", key: "longitude", width: 15 },
+      { header: "Id", key: "id", width: 40 },
+      { header: "Title", key: "title", width: 50 },
+      { header: "Coordinates", key: "coordinates", width: 40 },
+      { header: "Mall", key: "mall", width: 50 },
       { header: "Description", key: "description", width: 40 },
-      { header: "Tags", key: "tags", width: 30 },
-      { header: "Created At", key: "createdAt", width: 20 },
+      { header: "Tags", key: "tags", width: 40 },
+      { header: "Created At", key: "createdAt", width: 20 }
     ];
 
     // Style the header row
     const headerRow = sheet.getRow(1);
     headerRow.font = { bold: true };
-    headerRow.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: group.color.replace("#", "") + "CC" },
-    };
 
     // Add locations for this group
     const groupLocations = locations.filter((loc) => loc.groupId === group.id);
-    groupLocations.forEach((location) => {
+    groupLocations.forEach((location: any) => {
+      const groupName = groups.find(g => g.id === location.groupId)?.name || 'Default';
       sheet.addRow({
+        id: location.id,
         title: location.title,
-        latitude: location.latitude,
-        longitude: location.longitude,
+        coordinates: `[${location.latitude.toFixed(7)}, ${location.longitude.toFixed(7)}]`,
+        mall: groupName,
         description: location.description,
         tags: location.tags.join(", "),
-        createdAt: new Date(location.createdAt).toLocaleString(),
+        createdAt: new Date(location.createdAt).toLocaleString()
       });
     });
 
     // Auto-filter
     sheet.autoFilter = {
       from: { row: 1, column: 1 },
-      to: { row: 1, column: 6 },
+      to: { row: 1, column: 8 },
     };
   }
 
@@ -295,3 +334,4 @@ export const exportToExcel = async (
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+

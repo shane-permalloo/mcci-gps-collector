@@ -3,7 +3,9 @@ import { Location, Group } from '../types';
 import { getLocations, getGroups, deleteLocation } from '../services/locationService';
 import LocationCard from './LocationCard';
 import LocationMap from './LocationMap';
-import { List, Grid, SortAsc, SortDesc, Search, Filter, Map } from 'lucide-react';
+import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const ITEMS_PER_PAGE = 15;
 
 const LocationList: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -16,6 +18,7 @@ const LocationList: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [filterGroupId, setFilterGroupId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   
   useEffect(() => {
     loadData();
@@ -23,6 +26,8 @@ const LocationList: React.FC = () => {
   
   useEffect(() => {
     filterAndSortLocations();
+    // Reset to first page when filters change
+    setCurrentPage(1);
   }, [locations, filterGroupId, sortOrder, searchTerm]);
   
   const loadData = async () => {
@@ -86,6 +91,56 @@ const LocationList: React.FC = () => {
   
   const getGroupById = (id: string): Group => {
     return groups.find(group => group.id === id) || { id: 'unknown', name: 'Unknown', color: '#ccc' };
+  };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredLocations.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedLocations = filteredLocations.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const Pagination = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-center mt-6 space-x-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        
+        <div className="flex items-center space-x-1">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => handlePageChange(page)}
+              className={`px-3 py-1 rounded-md ${
+                currentPage === page
+                  ? 'bg-gray-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    );
   };
 
   const LoadingPlaceholder = () => (
@@ -190,26 +245,32 @@ const LocationList: React.FC = () => {
           groups={groups}
         />
       ) : (
-        <div className={`
-          ${viewMode === 'grid' 
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' 
-            : 'space-y-4'
-          }
-        `}>
-          {filteredLocations.map((location) => (
-            <LocationCard
-              key={location.id}
-              location={location}
-              group={getGroupById(location.groupId)}
-              onDelete={handleDeleteLocation}
-              onUpdate={loadData}
-            />
-          ))}
-        </div>
+        <>
+          <div className={`
+            ${viewMode === 'grid' 
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' 
+              : 'space-y-4'
+            }
+          `}>
+            {paginatedLocations.map((location) => (
+              <LocationCard
+                key={location.id}
+                location={location}
+                group={getGroupById(location.groupId)}
+                onDelete={handleDeleteLocation}
+                onUpdate={loadData}
+              />
+            ))}
+          </div>
+          <Pagination />
+        </>
       )}
       
       <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
         {filteredLocations.length} location{filteredLocations.length !== 1 ? 's' : ''} {filterGroupId || searchTerm ? 'found' : 'saved'}
+        {filteredLocations.length > ITEMS_PER_PAGE && !viewMode.includes('map') && (
+          <span> (Showing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredLocations.length)})</span>
+        )}
       </div>
     </div>
   );

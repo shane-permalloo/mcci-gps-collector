@@ -1,6 +1,5 @@
 import React from 'react';
-import { Menu, Share2, Trash2, X, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Share2, Trash2, X, LogOut } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -45,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignO
   };
 
   const handleDeleteAll = () => {
-    if (window.confirm('Are you sure you want to delete all locations? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete all your saved locations? This action cannot be undone.')) {
       onDeleteAll();
     }
   };

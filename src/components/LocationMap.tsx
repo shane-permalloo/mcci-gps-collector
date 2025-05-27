@@ -90,7 +90,7 @@ const LocationMap: React.FC<LocationMapProps> = ({ locations, groups, onLocation
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">{location.title}</h3>
                     <div className="text-sm text-gray-600 mb-2">
-                      <div>{location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}</div>
+                      <div>{location.latitude.toFixed(7)}, {location.longitude.toFixed(7)}</div>
                       <div className="mt-1">
                         Group: <span style={{ color: group.color }}>{group.name}</span>
                       </div>

@@ -159,15 +159,24 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
             <div key={group.id} className="flex items-center">
               <button
                 onClick={() => onGroupSelect(group.id)}
-                className={`px-4 py-2 rounded-l-full text-sm font-medium transition-all ${
+                className={`px-4 py-2 ${group.isOwner ? 'rounded-l-full' : 'rounded-full'} 
+                  text-sm font-medium transition-all ${
                   selectedGroupId === group.id
-                    ? 'bg-opacity-100 text-gray-100'
-                    : 'bg-opacity-20 hover:bg-opacity-30 text-gray-800 dark:text-gray-200'
+                    ? group.id === 'default' 
+                      ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900' 
+                      : 'bg-opacity-100 text-gray-100'
+                    : group.id === 'default'
+                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600'
+                      : 'bg-opacity-20 hover:bg-opacity-30 text-gray-800 dark:text-gray-200'
                 }`}
                 style={{
-                  backgroundColor: selectedGroupId === group.id ? group.color : `${group.color}30`,
+                  backgroundColor: selectedGroupId === group.id 
+                    ? (group.id === 'default' ? undefined : group.color) 
+                    : (group.id === 'default' ? undefined : `${group.color}30`),
                   borderWidth: '1px',
-                  borderColor: group.color,
+                  borderColor: selectedGroupId === group.id 
+                    ? (group.id === 'default' ? '#4B5563' : group.color) 
+                    : (group.id === 'default' ? '#9CA3AF' : group.color),
                   borderRightWidth: group.id === 'default' ? '1px' : '0',
                   borderRadius: group.id === 'default' ? '9999px' : undefined,
                 }}
@@ -194,21 +203,24 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
                       </button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => handleDeleteClick(group.id)}
-                      className={`p-2 rounded-r-full transition-all border border-l-0 hover:bg-red-50 dark:hover:bg-red-900/20 ${
-                        selectedGroupId === group.id
-                          ? 'text-white bg-opacity-100'
-                          : 'text-red-500 bg-opacity-20'
-                      }`}
-                      style={{
-                        backgroundColor: selectedGroupId === group.id ? group.color : undefined,
-                        borderColor: group.color,
-                      }}
-                      title="Delete group"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    // Only show delete button if user owns the group
+                    group.isOwner && (
+                      <button
+                        onClick={() => handleDeleteClick(group.id)}
+                        className={`p-2 rounded-r-full transition-all border border-l-0 hover:bg-red-50 dark:hover:bg-red-900/20 ${
+                          selectedGroupId === group.id
+                            ? 'text-white bg-opacity-100'
+                            : 'text-red-500 bg-opacity-20'
+                        }`}
+                        style={{
+                          backgroundColor: selectedGroupId === group.id ? group.color : undefined,
+                          borderColor: group.color,
+                        }}
+                        title="Delete group"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )
                   )}
                 </div>
               )}
@@ -221,3 +233,4 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
 };
 
 export default GroupSelector;
+

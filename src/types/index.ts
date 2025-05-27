@@ -7,10 +7,13 @@ export interface Location {
   tags: string[];
   groupId: string;
   createdAt: number;
+  userId?: string;
+  isOwner?: boolean;
 }
 
 export interface Group {
   id: string;
   name: string;
   color: string;
+  isOwner?: boolean;
 }

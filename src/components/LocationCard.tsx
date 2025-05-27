@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Location, Group } from '../types';
-import { MapPin, Tag, Trash2, Edit2, X, Check } from 'lucide-react';
+import { MapPin, Trash2, Edit2, X, Check, Info } from 'lucide-react';
 import { updateLocation } from '../services/locationService';
 import GroupSelector from './GroupSelector';
 
@@ -22,6 +22,9 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   
   const formattedDate = new Date(location.createdAt).toLocaleString();
   
+  // Use the isOwner property directly from the location object
+  const isOwner = location.isOwner;
+
   const handleSave = () => {
     if (!editedTitle.trim()) {
       setTitleError(true);
@@ -91,6 +94,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
               {location.title}
             </h3>
           )}
+          {group.name !== 'Default' ? (
           <span 
             className="text-xs font-medium px-2 py-1 rounded-full shrink-0"
             style={{ 
@@ -102,6 +106,16 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           >
             {group.name}
           </span>
+          ) : 
+          <span 
+            className="text-xs font-medium px-2 py-1 rounded-full shrink-0 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
+            style={{ 
+              backgroundColor: '#f0f0f020',
+            }}
+          >
+            {group.name}
+          </span>
+          }
         </div>
         
         <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3 mt-3">
@@ -161,7 +175,14 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           <span className="text-xs text-gray-500 dark:text-gray-400">{formattedDate}</span>
           
           <div className="flex items-center gap-2">
-            {isEditing ? (
+            {!isOwner && (
+              <div className="flex items-center text-amber-600 dark:text-amber-400 text-xs p-1">
+                <Info size={14} className="mr-1" />
+                <span>Shared location</span>
+              </div>
+            )}
+            
+            {isOwner && isEditing ? (
               <>
                 <button
                   onClick={handleCancel}
@@ -178,7 +199,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
                   <Check size={16} />
                 </button>
               </>
-            ) : (
+            ) : isOwner ? (
               <>
                 <button
                   onClick={() => setIsEditing(true)}
@@ -214,7 +235,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
                   </button>
                 )}
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -223,3 +244,5 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
 };
 
 export default LocationCard;
+
+

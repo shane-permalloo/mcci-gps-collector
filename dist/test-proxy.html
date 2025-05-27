@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Proxy Test</title>
+</head>
+<body>
+    <h1>Directus Proxy Test</h1>
+    <div id="result"></div>
+    <button onclick="testProxy()">Test Proxy Connection</button>
+
+    <script>
+        async function testProxy() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Testing proxy...</p>';
+            
+            try {
+                console.log('🔍 Testing proxy connection...');
+                
+                // Test the proxy endpoint
+                console.log('1️⃣ Testing proxy server info endpoint...');
+                const response = await fetch('/api/directus/server/info', {
+                    headers: {
+                        'Authorization': 'Bearer UThix7ozIrwxPwNtPMKZ9EuGy5IqHQLM'
+                    }
+                });
+
+                console.log(`Status: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Proxy is working!');
+                    console.log('📊 Server info:', data);
+                    resultDiv.innerHTML = `
+                        <p style="color: green;">✅ Proxy is working!</p>
+                        <p>Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    console.log('❌ Proxy failed');
+                    const errorText = await response.text();
+                    console.log(`Error: ${errorText}`);
+                    resultDiv.innerHTML = `
+                        <p style="color: red;">❌ Proxy failed</p>
+                        <p>Status: ${response.status}</p>
+                        <p>Error: ${errorText}</p>
+                    `;
+                }
+
+            } catch (error) {
+                console.log('💥 Proxy test failed with error:', error.message);
+                resultDiv.innerHTML = `
+                    <p style="color: red;">💥 Proxy test failed</p>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        // Auto-run test on page load
+        window.addEventListener('load', testProxy);
+    </script>
+</body>
+</html>

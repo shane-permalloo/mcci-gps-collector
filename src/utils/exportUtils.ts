@@ -1,33 +1,63 @@
 import { Location, Group } from '../types';
 
 /**
- * Converts locations data to CSV format for Excel
+ * Converts locations data to CSV format for Directus import compatibility
+ * Matches the format: id,shop_name,shop_malls,shop_location.type,shop_location.coordinates
  */
 export const locationsToCSV = (locations: Location[], groups: Group[]): string => {
-  // Create headers
-  const headers = ['Title', 'Latitude', 'Longitude', 'Description', 'Tags', 'Group', 'Created At'];
-  
+  // Create headers matching the Directus import format
+  const headers = ['id', 'shop_name', 'shop_malls', 'shop_location.type', 'shop_location.coordinates'];
+
   // Map locations to rows
   const rows = locations.map(location => {
-    const group = groups.find(g => g.id === location.groupId)?.name || 'Ungrouped';
-    const date = new Date(location.createdAt).toLocaleString();
+    // Get the group for this location
+    const group = location.groupId ? groups.find(g => g.id === location.groupId) : null;
+    const groupName = group?.name || '';
+
+    // Format mall data as JSON string with the required structure
+    // If group name is "Default", use empty array regardless of groupId
+    const mallsJson = location.groupId && groupName !== "Default" ?
+      `[{"Malls_id":{"mall_name":"${groupName}"}}]` :
+      '[]';
+
+    // Format coordinates as [longitude,latitude]
+    const coordinates = location.longitude && location.latitude ?
+      `[${location.longitude.toFixed(7)},${location.latitude.toFixed(7)}]` :
+      '';
+
     return [
+      'XXX', // Placeholder ID - user must replace with actual Directus shop ID
       location.title,
-      location.latitude.toFixed(6),
-      location.longitude.toFixed(6),
-      location.description,
-      location.tags.join(', '),
-      group,
-      date
+      mallsJson,
+      coordinates ? 'Point' : '', // Only add 'Point' if coordinates exist
+      coordinates
     ];
   });
-  
+
   // Combine headers and rows
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ...rows.map(row => row.map((cell, index) => {
+      // Handle special formatting to match test-shops.csv format
+      if (index === 0) {
+        // ID field - no quotes for XXX
+        return String(cell);
+      } else if (index === 2) {
+        // shop_malls field - no quotes for arrays
+        return String(cell);
+      } else if (index === 3) {
+        // shop_location.type field - no quotes for Point
+        return String(cell);
+      } else if (index === 4) {
+        // shop_location.coordinates field - quote the array
+        return `"${String(cell)}"`;
+      } else {
+        // shop_name and other fields - quote them
+        return `"${String(cell).replace(/"/g, '""')}"`;
+      }
+    }).join(','))
   ].join('\n');
-  
+
   return csvContent;
 };
 
@@ -38,11 +68,11 @@ export const downloadCSV = (csvContent: string, filename: string): void => {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  
+
   link.setAttribute('href', url);
   link.setAttribute('download', filename);
   link.style.visibility = 'hidden';
-  
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -50,9 +80,13 @@ export const downloadCSV = (csvContent: string, filename: string): void => {
 
 /**
  * Main export function that generates and downloads the CSV file
+ * with the specific format required for Directus import compatibility
+ * Note: IDs are set to "XXX" and must be replaced with actual Directus shop IDs before import
  */
-export const exportToExcel = (locations: Location[], groups: Group[]): void => {
+export const exportToCSVFile = (locations: Location[], groups: Group[]): void => {
   const csvContent = locationsToCSV(locations, groups);
-  const filename = `locations_export_${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `Location-Exported-${new Date().toISOString().slice(0, 10)}-${Math.floor(Math.random() * 90000) + 10000}.csv`;
   downloadCSV(csvContent, filename);
 };
+
+
