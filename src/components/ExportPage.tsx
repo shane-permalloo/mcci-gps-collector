@@ -347,15 +347,20 @@ const ExportPage: React.FC = () => {
                 <span className="text-md font-medium text-gray-700 dark:text-gray-300 flex items-center">
                   Select groups to export
                 </span>
+              <div>  
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                {selectedGroupIds.length} group(s) selected
+              </span>
                 <button
                   onClick={toggleAllGroups}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline p-0 m-0 pl-4"
                 >
-                  {selectedGroupIds.length === groups.length ? 'Deselect All' : 'Select All'}
+                  {selectedGroupIds.length === groups.length ? 'Deselect All' : 'Select All'} 
                 </button>
-              </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {groups.map(group => (
                   <div 
                     key={group.id}
@@ -392,11 +397,6 @@ const ExportPage: React.FC = () => {
                 ))}
               </div>
               
-              {selectedGroupIds.length > 0 && (
-                <div className="mt-3 text-sm text-blue-600 dark:text-blue-400">
-                  {selectedGroupIds.length} group(s) selected
-                </div>
-              )}
             </div>
           )}
         </div>
