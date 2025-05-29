@@ -272,15 +272,51 @@ export const getImportedLocations = async (): Promise<ImportedLocation[]> => {
   }
 };
 
-// Export to Excel
+// Export to Excel with improved filename
 export const exportToExcel = async (
   locations: Location[],
   groups: Group[],
+  dateRange?: { startDate: Date | null; endDate: Date | null },
+  selectedGroupIds?: string[]
 ): Promise<void> => {
   const workbook = new Excel.Workbook();
+  
+  // Generate filename based on filters
+  let filename = 'locations';
+  
+  // Add date range to filename if provided
+  if (dateRange && dateRange.startDate && dateRange.endDate) {
+    const startDateStr = dateRange.startDate.toISOString().slice(0, 10);
+    const endDateStr = dateRange.endDate.toISOString().slice(0, 10);
+    filename += `_${startDateStr}_to_${endDateStr}`;
+  } else if (selectedGroupIds && selectedGroupIds.length > 0 && selectedGroupIds.length < groups.length) {
+    // Add group names to filename if specific groups are selected
+    if (selectedGroupIds.length <= 3) {
+      // If 3 or fewer groups, include all names
+      const groupNames = selectedGroupIds.map(id => {
+        const group = groups.find(g => g.id === id);
+        return group ? group.name.replace(/\s+/g, '-') : 'unknown';
+      });
+      filename += `_${groupNames.join(',')}`;
+    } else {
+      // If more than 3 groups, include count
+      filename += `_${selectedGroupIds.length}-groups`;
+    }
+  } else {
+    // If all groups or no specific filter, append "All" with today's date
+    filename += `_All_${new Date().toISOString().slice(0, 10)}`;
+  }
+  
+  // Add random number to prevent overwriting
+  filename += `_${Math.floor(Math.random() * 90000) + 10000}.xlsx`;
 
-  // Create a sheet for each group
-  for (const group of groups) {
+  // Determine which groups to include in the export
+  const groupsToInclude = selectedGroupIds && selectedGroupIds.length > 0
+    ? groups.filter(group => selectedGroupIds.includes(group.id))
+    : groups;
+
+  // Create a sheet for each included group
+  for (const group of groupsToInclude) {
     const sheet = workbook.addWorksheet(group.name);
 
     // Set up headers
@@ -316,7 +352,7 @@ export const exportToExcel = async (
     // Auto-filter
     sheet.autoFilter = {
       from: { row: 1, column: 1 },
-      to: { row: 1, column: 8 },
+      to: { row: 1, column: 7 },
     };
   }
 
@@ -328,7 +364,7 @@ export const exportToExcel = async (
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `locations_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

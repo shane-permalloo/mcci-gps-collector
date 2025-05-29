@@ -19,6 +19,45 @@ interface DateValueType {
   endDate: Date | null;
 }
 
+// Add CSS for toggle switch
+const toggleStyles = `
+  .toggle-checkbox:checked {
+    right: 0;
+    transform: translateX(0) scale(1.1);
+  }
+  .toggle-checkbox {
+    right: 100%;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    background: #e5e7eb;
+    border-color: #e5e7eb;
+  }
+  .toggle-checkbox:checked + .toggle-label {
+    background-color: #3b82f6;
+  }
+  .toggle-label {
+    transition: background-color 0.3s ease;
+  }
+  
+  .group-toggle-checkbox:checked {
+    right: 0;
+    transform: translateX(0) scale(1.1);
+  }
+  .group-toggle-checkbox {
+    right: 100%;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    background: #e5e7eb;
+    border-color: #e5e7eb;
+  }
+  .group-toggle-checkbox:checked + .group-toggle-label {
+    background-color: #3b82f6;
+  }
+  .group-toggle-label {
+    transition: background-color 0.3s ease;
+  }
+`;
+
 const ExportPage: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<'excel' | 'csv'>('csv');
@@ -26,6 +65,9 @@ const ExportPage: React.FC = () => {
   const [filteredCount, setFilteredCount] = useState(0);
   const [lastExport, setLastExport] = useState<string>('');
   const [dateError, setDateError] = useState<string>('');
+  const [groups, setGroups] = useState<any[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [groupFilterEnabled, setGroupFilterEnabled] = useState(false);
   
   // Use a combined date value for the datepicker
   const [dateValue, setDateValue] = useState<DateValueType>({
@@ -41,6 +83,7 @@ const ExportPage: React.FC = () => {
 
   useEffect(() => {
     loadLocationCount();
+    loadGroups();
   }, []);
 
   useEffect(() => {
@@ -57,7 +100,16 @@ const ExportPage: React.FC = () => {
     } else {
       setDateError('');
     }
-  }, [dateValue, locationCount]);
+  }, [dateValue, locationCount, selectedGroupIds, groupFilterEnabled]);
+
+  const loadGroups = async () => {
+    try {
+      const fetchedGroups = await getGroups();
+      setGroups(fetchedGroups);
+    } catch (error) {
+      console.error('Failed to load groups:', error);
+    }
+  };
 
   const loadLocationCount = async () => {
     try {
@@ -69,19 +121,27 @@ const ExportPage: React.FC = () => {
   };
 
   const updateFilteredCount = async () => {
-    const { startDate, endDate } = dateValue;
-    if (!startDate || !endDate) {
-      setFilteredCount(locationCount);
-      return;
-    }
-
     try {
       const locations = await getLocations();
-      const startTimestamp = startDate.getTime();
-      const endTimestamp = new Date(endDate.setHours(23, 59, 59, 999)).getTime();
-      const filtered = locations.filter(loc => 
-        loc.createdAt >= startTimestamp && loc.createdAt <= endTimestamp
-      );
+      let filtered = [...locations];
+      
+      // Apply date filter if both dates are set
+      const { startDate, endDate } = dateValue;
+      if (startDate && endDate) {
+        const startTimestamp = startDate.getTime();
+        const endTimestamp = new Date(endDate.setHours(23, 59, 59, 999)).getTime();
+        filtered = filtered.filter(loc => 
+          loc.createdAt >= startTimestamp && loc.createdAt <= endTimestamp
+        );
+      }
+      
+      // Apply group filter if enabled and groups are selected
+      if (groupFilterEnabled && selectedGroupIds.length > 0) {
+        filtered = filtered.filter(loc => 
+          selectedGroupIds.includes(loc.groupId || 'default')
+        );
+      }
+      
       setFilteredCount(filtered.length);
     } catch (error) {
       console.error('Failed to filter locations:', error);
@@ -101,23 +161,38 @@ const ExportPage: React.FC = () => {
         return;
       }
 
-      let filteredLocations = locations;
+      let filteredLocations = [...locations];
+      
+      // Apply date filter if using filters and both dates are set
       const { startDate, endDate } = dateValue;
       if (useFilter && startDate && endDate) {
         const startTimestamp = startDate.getTime();
         const endTimestamp = new Date(endDate.setHours(23, 59, 59, 999)).getTime();
-        filteredLocations = locations.filter(loc => 
+        filteredLocations = filteredLocations.filter(loc => 
           loc.createdAt >= startTimestamp && loc.createdAt <= endTimestamp
+        );
+      }
+      
+      // Apply group filter if enabled and groups are selected
+      if (useFilter && groupFilterEnabled && selectedGroupIds.length > 0) {
+        filteredLocations = filteredLocations.filter(loc => 
+          selectedGroupIds.includes(loc.groupId || 'default')
         );
       }
 
       if (filteredLocations.length === 0) {
-        alert('No locations found in the selected date range.');
+        alert('No locations found with the selected filters.');
         return;
       }
       
       if (exportFormat === 'excel') {
-        await exportToExcel(filteredLocations, groups);
+        // Pass date range and selected groups for filename generation
+        await exportToExcel(
+          filteredLocations, 
+          groups,
+          useFilter ? dateValue : undefined,
+          useFilter && groupFilterEnabled ? selectedGroupIds : undefined
+        );
       } else {
         exportToCSVFile(filteredLocations, groups);
       }
@@ -139,8 +214,29 @@ const ExportPage: React.FC = () => {
     }
   };
   
+  const toggleGroupSelection = (groupId: string) => {
+    setSelectedGroupIds(prev => {
+      if (prev.includes(groupId)) {
+        return prev.filter(id => id !== groupId);
+      } else {
+        return [...prev, groupId];
+      }
+    });
+  };
+  
+  const toggleAllGroups = () => {
+    if (selectedGroupIds.length === groups.length) {
+      setSelectedGroupIds([]);
+    } else {
+      setSelectedGroupIds(groups.map(group => group.id));
+    }
+  };
+  
   return (
     <div className="max-w-8xl mx-auto">
+      {/* Add style tag for toggle switch */}
+      <style>{toggleStyles}</style>
+      
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -157,7 +253,7 @@ const ExportPage: React.FC = () => {
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex items-center">
           Export your saved locations to Excel or CSV format.
           <br />CSV exports are formatted for MCCI Back-Office import compatibility.
-          <br />You may also optionally filter the export by date range.
+          <br />You may also optionally filter the export by date range or groups.
         </p>
         <p className="text-sm px-2 py-3 border border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 mb-4">
           <strong>Note:</strong> CSV exports use "XXX" as placeholder IDs - replace with actual shop IDs before importing.
@@ -217,6 +313,94 @@ const ExportPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Group Filter */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-lg font-medium text-gray-700 dark:text-gray-300">
+              Filter by Groups
+            </label>
+            <div className="flex items-center">
+              {/* Main toggle switch */}
+              <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                <input
+                  type="checkbox"
+                  name="toggle"
+                  id="enableGroupFilter"
+                  checked={groupFilterEnabled}
+                  onChange={() => setGroupFilterEnabled(!groupFilterEnabled)}
+                  className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                />
+                <label
+                  htmlFor="enableGroupFilter"
+                  className="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer bg-gray-300 dark:bg-gray-600"
+                ></label>
+              </div>
+              <label htmlFor="enableGroupFilter" className="text-sm text-gray-600 dark:text-gray-400">
+                Enable group filtering
+              </label>
+            </div>
+          </div>
+          
+          {groupFilterEnabled && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-md font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                  Select groups to export
+                </span>
+                <button
+                  onClick={toggleAllGroups}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {selectedGroupIds.length === groups.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {groups.map(group => (
+                  <div 
+                    key={group.id}
+                    onClick={() => toggleGroupSelection(group.id)}
+                    className={`
+                      p-2 rounded-md cursor-pointer flex items-center justify-between
+                      ${selectedGroupIds.includes(group.id) 
+                        ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700' 
+                        : 'bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'}
+                    `}
+                  >
+                    <span 
+                      className="text-sm font-medium truncate mr-2 text-gray-700 dark:text-gray-300"
+                      style={{ 
+                        color: selectedGroupIds.includes(group.id) ? group.color : '',
+                      }}
+                    >
+                      {group.name}
+                    </span>
+                    <div className="relative inline-block w-7 align-middle select-none transition duration-200 ease-in flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={selectedGroupIds.includes(group.id)}
+                        onChange={() => {}} // Handled by the div onClick
+                        className="group-toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                      />
+                      <label
+                        className={`group-toggle-label block overflow-hidden h-4 rounded-full cursor-pointer ${
+                          selectedGroupIds.includes(group.id) ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      ></label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {selectedGroupIds.length > 0 && (
+                <div className="mt-3 text-sm text-blue-600 dark:text-blue-400">
+                  {selectedGroupIds.length} group(s) selected
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Date Filter */}
         <div className="mb-6">
           <label className="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -242,12 +426,17 @@ const ExportPage: React.FC = () => {
           </div>
         )}
 
-        {((dateValue.startDate || dateValue.endDate) && !dateError) && (
+        {((dateValue.startDate || dateValue.endDate || (groupFilterEnabled && selectedGroupIds.length > 0)) && !dateError) && (
           <div className="mt-6 px-3 py-2 text-sm bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
             <p className="text-blue-800 dark:text-blue-200">
+              Will export {filteredCount} locations
               {dateValue.startDate && dateValue.endDate 
-                ? `Will export ${filteredCount} locations from ${formatDate(dateValue.startDate)} to ${formatDate(dateValue.endDate)}`
-                : 'Please select both start and end dates for filtering'
+                ? ` from ${formatDate(dateValue.startDate)} to ${formatDate(dateValue.endDate)}`
+                : ''
+              }
+              {groupFilterEnabled && selectedGroupIds.length > 0
+                ? ` from ${selectedGroupIds.length} selected group(s)`
+                : ''
               }
             </p>
           </div>
@@ -276,7 +465,12 @@ const ExportPage: React.FC = () => {
 
             <button
               onClick={() => handleExport(true)}
-              disabled={isExporting || !dateValue.startDate || !dateValue.endDate || filteredCount === 0 || !!dateError}
+              disabled={
+                isExporting || 
+                ((!dateValue.startDate || !dateValue.endDate) && (!groupFilterEnabled || selectedGroupIds.length === 0)) || 
+                filteredCount === 0 || 
+                !!dateError
+              }
               className="flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 transform"
             >
               {isExporting ? (
@@ -287,7 +481,7 @@ const ExportPage: React.FC = () => {
               ) : (
                 <>
                   <Calendar size={18} className="mr-2" />
-                  Export Range ({filteredCount})
+                  Export Filtered ({filteredCount})
                 </>
               )}
             </button>
