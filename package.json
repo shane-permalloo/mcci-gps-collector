@@ -11,11 +11,13 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.8",
+    "chart.js": "^4.4.9",
+    "dayjs": "^1.11.12",
     "exceljs": "^4.4.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",
-    "dayjs": "^1.11.12",
     "react": "^18.3.1",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.22.3",
@@ -42,4 +44,3 @@
     "vite-plugin-pwa": "^1.0.0"
   }
 }
-

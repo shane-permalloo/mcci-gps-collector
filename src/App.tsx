@@ -3,17 +3,18 @@ import LocationForm from './components/LocationForm';
 import LocationList from './components/LocationList';
 import CSVImport from './components/CSVImport';
 import ExportPage from './components/ExportPage';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import ThemeToggle from './components/ThemeToggle';
 import Sidebar from './components/Sidebar';
 import Auth from './components/Auth';
 import { getLocations, deleteAllLocations } from './services/locationService';
-import { Plus, MapPin, Menu, Upload, FileDown } from 'lucide-react';
+import { Plus, MapPin, Menu, Upload, FileDown, BarChart } from 'lucide-react';
 import useDarkMode from './hooks/useDarkMode';
 import { supabase } from './lib/supabase';
 import { User } from '@supabase/supabase-js';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'list' | 'new' | 'import' | 'export'>('new');
+  const [activeTab, setActiveTab] = useState<'list' | 'new' | 'import' | 'export' | 'analytics'>('new');
   const [locationCount, setLocationCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isDark, setIsDark } = useDarkMode();
@@ -66,6 +67,11 @@ function App() {
     // Sidebar will be closed by the onAuthStateChange handler
   };
 
+  const handleOpenAnalytics = () => {
+    setActiveTab('analytics');
+    setIsSidebarOpen(false);
+  };
+
   if (!user) {
     return <Auth />;
   }
@@ -99,65 +105,66 @@ function App() {
       <main className="container mx-auto px-4 py-6">
         <div className="flex justify-center mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg w-full justify-center space-x-2 shadow-md p-1 inline-flex transition-colors" id="tab-buttons">
-            <button
-              onClick={() => setActiveTab('new')}
-              className={`flex items-center px-3 sm:px-6 py-2 rounded-full transition-colors whitespace-nowrap ${
-                activeTab === 'new'
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              <Plus size={18} className="mr-1 sm:mr-2 shrink-0" />
-              <span>New</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('list')}
-              className={`flex items-center px-3 sm:px-6 py-2 rounded-full transition-colors whitespace-nowrap ${
-                activeTab === 'list'
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              <MapPin size={18} className="mr-1 sm:mr-2 shrink-0" />
-              <span>Saved</span> <span className='ml-1 hidden md:inline'> Locations</span>
-              {locationCount > 0 && (
-                <span className={`ml-1 sm:ml-2 px-2 py-0.5 rounded-full text-xs ${
-                  activeTab === 'list'
-                    ? 'bg-white text-blue-600'
-                    : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                }`}>
-                  {locationCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('export')}
-              className={`flex items-center px-3 sm:px-6 py-2 rounded-full transition-colors whitespace-nowrap ${
-                activeTab === 'export'
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              <FileDown size={18} className="mr-1 sm:mr-2 shrink-0" />
-              <span>Export</span> <span className='hidden ml-1 md:inline'> CSV</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('import')}
-              className={`flex items-center px-3 sm:px-6 py-2 rounded-full transition-colors whitespace-nowrap ${
-                activeTab === 'import'
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              <Upload size={18} className="mr-1 sm:mr-2 shrink-0" />
-              <span>Import</span> <span className='hidden ml-1 md:inline'> to Back-Office</span>
-            </button>
-            
+            <div className="flex flex-wrap gap-1 md:gap-2 justify-center md:justify-start">
+              
+              <button
+                onClick={() => setActiveTab('new')}
+                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                  activeTab === 'new' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Plus size={18} className="mr-2" />
+                <span>New</span> <span className='hidden ml-1 md:inline'>Location</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('list')}
+                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                  activeTab === 'list' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <MapPin size={18} className="mr-2" />
+                <span>Saved</span> <span className='hidden ml-1 lg:inline'> Locations</span>
+              </button>
+              
+              
+              <button
+                onClick={() => setActiveTab('export')}
+                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                  activeTab === 'export' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <FileDown size={18} className="mr-2" />
+                <span>Export</span> <span className='hidden ml-1 lg:inline'> to File</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('import')}
+                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                  activeTab === 'import' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Upload size={18} className="mr-2" />
+                <span>Import</span> <span className='hidden ml-1 lg:inline'> to Back-Office</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`flex items-center px-4 py-2 rounded-full transition-colors hidden sm:flex ${
+                  activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <BarChart size={18} className="mr-2" />
+                <span>Analytics</span>
+              </button>
+              
+            </div>
           </div>
         </div>
 
         <div className="max-w-8xl mx-auto" style={{ minHeight: '70vh' }}>
-          {activeTab === 'new' ? (
+          {activeTab === 'analytics' ? (
+            <AnalyticsDashboard />
+          ) : activeTab === 'new' ? (
             <LocationForm onLocationSaved={handleLocationSaved} />
           ) : activeTab === 'list' ? (
             <LocationList />
@@ -187,6 +194,7 @@ function App() {
         onClose={() => setIsSidebarOpen(false)}
         onDeleteAll={handleDeleteAll}
         onSignOut={handleSignOut}
+        onOpenAnalytics={handleOpenAnalytics}
       />
 
       {/* Overlay */}

@@ -1,14 +1,15 @@
 import React from 'react';
-import { Share2, Trash2, X, LogOut } from 'lucide-react';
+import { Share2, Trash2, X, LogOut, BarChart } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onDeleteAll: () => void;
   onSignOut: () => void;
+  onOpenAnalytics: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignOut }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignOut, onOpenAnalytics }) => {
   const handleShare = async () => {
     try {
       const position = await getCurrentPosition();
@@ -69,6 +70,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignO
           >
             <Share2 size={20} className="mr-3" />
             Share Location
+          </button>
+          
+          <button
+            onClick={onOpenAnalytics}
+            className="w-full flex items-center px-4 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <BarChart size={20} className="mr-3" />
+            Analytics
           </button>
           
           <button

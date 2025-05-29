@@ -64,7 +64,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   };
   
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg">
+    <div className="overflow-hidden transition-all hover:shadow-md bg-white dark:bg-gray-700 border-t-0 rounded-lg shadow border border-gray-200 dark:border-gray-600">
       <div 
         className="h-2" 
         style={{ backgroundColor: group.color }}
