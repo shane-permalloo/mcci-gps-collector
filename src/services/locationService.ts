@@ -336,7 +336,7 @@ export const exportToExcel = async (
 
     // Add locations for this group
     const groupLocations = locations.filter((loc) => loc.groupId === group.id);
-    groupLocations.forEach((location: any) => {
+    groupLocations.forEach((location: Location) => {
       const groupName = groups.find(g => g.id === location.groupId)?.name || 'Default';
       sheet.addRow({
         id: location.id,

@@ -5,7 +5,7 @@ import LocationCard from './LocationCard';
 import LocationMap from './LocationMap';
 import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 30;
 
 const LocationList: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);

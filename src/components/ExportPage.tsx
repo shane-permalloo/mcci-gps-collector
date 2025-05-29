@@ -65,7 +65,9 @@ const ExportPage: React.FC = () => {
   const [filteredCount, setFilteredCount] = useState(0);
   const [lastExport, setLastExport] = useState<string>('');
   const [dateError, setDateError] = useState<string>('');
-  const [groups, setGroups] = useState<any[]>([]);
+  const [groups, setGroups] = useState<{
+    color: string; id: string; name: string
+}[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [groupFilterEnabled, setGroupFilterEnabled] = useState(false);
   
