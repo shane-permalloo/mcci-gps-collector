@@ -80,7 +80,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
                   setEditedTitle(e.target.value);
                   setTitleError(false);
                 }}
-                className={`w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                className={`w-full mb-3 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
                   titleError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="Enter title"
@@ -90,7 +90,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
               )}
             </div>
           ) : (
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2 flex-1 truncate">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3 flex-1 truncate">
               {location.title}
             </h3>
           )}
@@ -118,12 +118,12 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           }
         </div>
         
-        <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3 mt-3">
+        <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3">
           <MapPin size={16} className="mr-1 flex-shrink-0" />
-          <div className="font-mono text-sm space-x-2 overflow-x-auto">
-            <span title="Latitude">{location.latitude.toFixed(6)}</span>
+          <div className="font-mono text-md space-x-2 overflow-x-auto">
+            <span title="Latitude">{location.latitude.toFixed(7)}</span>
             <span>,</span>
-            <span title="Longitude">{location.longitude.toFixed(6)}</span>
+            <span title="Longitude">{location.longitude.toFixed(7)}</span>
           </div>
         </div>
         
@@ -139,8 +139,8 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{location.description}</p>
         )}
         
-        <div className="flex items-start mb-3">
           {isEditing ? (
+        <div className="flex items-start mb-3">
             <input
               type="text"
               value={editedTags}
@@ -148,19 +148,21 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
               className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               placeholder="Enter tags separated by commas"
             />
+            </div>
           ) : (
+        <div className="flex items-start">
             <div className="flex flex-wrap gap-1">
               {location.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded"
+                  className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 text-xs px-2 py-1 rounded"
                 >
                   {tag}
                 </span>
               ))}
+        </div>
             </div>
           )}
-        </div>
 
         {isEditing && (
           <div className="mb-3">
@@ -171,7 +173,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           </div>
         )}
         
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
           <span className="text-xs text-gray-500 dark:text-gray-400">{formattedDate}</span>
           
           <div className="flex items-center gap-2">
