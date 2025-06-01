@@ -70,7 +70,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
         style={{ backgroundColor: group.color }}
       />
       <div className="p-5">
-        <div className="flex justify-between items-start gap-4">
+        <div className="flex justify-between items-start gap-4 sm:flex-row flex-col">
           {isEditing ? (
             <div className="flex-1">
               <input
@@ -80,7 +80,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
                   setEditedTitle(e.target.value);
                   setTitleError(false);
                 }}
-                className={`w-full mb-3 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                className={`w-full sm:mb-0 mb-3 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
                   titleError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
                 placeholder="Enter title"
@@ -90,7 +90,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
               )}
             </div>
           ) : (
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3 flex-1 truncate">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white sm:mb-3 mb-0 flex-1 truncate">
               {location.title}
             </h3>
           )}
@@ -118,9 +118,9 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           }
         </div>
         
-        <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3">
+        <div className="flex items-center text-gray-600 dark:text-gray-400 my-3">
           <MapPin size={16} className="mr-1 flex-shrink-0" />
-          <div className="font-mono text-md space-x-2 overflow-x-auto">
+          <div className="font-mono text-sm space-x-2 overflow-x-auto">
             <span title="Latitude">{location.latitude.toFixed(7)}</span>
             <span>,</span>
             <span title="Longitude">{location.longitude.toFixed(7)}</span>

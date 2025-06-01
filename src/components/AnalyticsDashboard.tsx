@@ -571,7 +571,7 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="flex items-center">
             <MapPin className="h-8 w-8 text-blue-500 dark:text-blue-400 mr-3" />
             <div>
-              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300">Total Locations</h3>
+              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300">Saved Locations</h3>
               <p className="text-2xl font-bold text-blue-700 dark:text-blue-200">{locations.length}</p>
             </div>
           </div>

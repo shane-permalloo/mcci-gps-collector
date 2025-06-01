@@ -248,7 +248,7 @@ const ExportPage: React.FC = () => {
           </h2>
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
             <Database size={16} className="mr-1" />
-            <span>{locationCount} total locations</span>
+            <span>{locationCount} locations</span>
           </div>
         </div>
 

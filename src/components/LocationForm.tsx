@@ -167,14 +167,14 @@ const LocationForm: React.FC<LocationFormProps> = ({ onLocationSaved }) => {
           {/* Coordinates display */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p className="text-xl text-gray-500 dark:text-gray-400 mb-1">Latitude</p>
-              <div className="font-mono text-xl font-medium dark:text-white">
+              <p className="text-md text-gray-500 dark:text-gray-400 mb-1">Latitude</p>
+              <div className="font-mono text-md font-medium dark:text-white">
                 {currentPosition[0].toFixed(7)}
               </div>
             </div>
             <div>
-              <p className="text-xl text-gray-500 dark:text-gray-400 mb-1">Longitude</p>
-              <div className="font-mono text-xl font-medium dark:text-white">
+              <p className="text-md text-gray-500 dark:text-gray-400 mb-1">Longitude</p>
+              <div className="font-mono text-md font-medium dark:text-white">
                 {currentPosition[1].toFixed(7)}
               </div>
             </div>

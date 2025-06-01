@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, Trash2, X, LogOut, BarChart } from 'lucide-react';
+import { Share2, Trash2, X, LogOut, BarChart, Upload } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -7,9 +7,10 @@ interface SidebarProps {
   onDeleteAll: () => void;
   onSignOut: () => void;
   onOpenAnalytics: () => void;
+  onOpenImport: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignOut, onOpenAnalytics }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignOut, onOpenAnalytics, onOpenImport }) => {
   const handleShare = async () => {
     try {
       const position = await getCurrentPosition();
@@ -70,6 +71,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignO
           >
             <Share2 size={20} className="mr-3" />
             Share Location
+          </button>
+          
+          <button
+            onClick={onOpenImport}
+            className="w-full flex items-center px-4 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <Upload size={20} className="mr-3" />
+            Import to Back-Office
           </button>
           
           <button

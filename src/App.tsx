@@ -72,6 +72,11 @@ function App() {
     setIsSidebarOpen(false);
   };
 
+  const handleOpenImport = () => {
+    setActiveTab('import');
+    setIsSidebarOpen(false);
+  };
+
   if (!user) {
     return <Auth />;
   }
@@ -140,7 +145,7 @@ function App() {
               
               <button
                 onClick={() => setActiveTab('import')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                className={`flex items-center px-4 py-2 rounded-full transition-colors hidden sm:flex ${
                   activeTab === 'import' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
@@ -195,6 +200,7 @@ function App() {
         onDeleteAll={handleDeleteAll}
         onSignOut={handleSignOut}
         onOpenAnalytics={handleOpenAnalytics}
+        onOpenImport={handleOpenImport}
       />
 
       {/* Overlay */}

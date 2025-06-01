@@ -160,7 +160,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
               <button
                 onClick={() => onGroupSelect(group.id)}
                 className={`px-4 py-2 ${group.isOwner ? 'rounded-l-full' : 'rounded-full'} 
-                  text-sm font-medium transition-all ${
+                  text-xs font-medium transition-all ${
                   selectedGroupId === group.id
                     ? group.id === 'default' 
                       ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900' 
