@@ -1,6 +1,7 @@
 import { Location, Group } from "../types";
 import * as Excel from "exceljs";
 import { supabase } from "../lib/supabase";
+import { DIRECTUS_CONFIG } from '../utils/csvImportUtils';
 
 const DEFAULT_GROUPS: Group[] = [
   { id: "default", name: "Default", color: "25252500" },
@@ -369,5 +370,35 @@ export const exportToExcel = async (
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+// Add this function to get location update statistics
+export const getLocationUpdateStats = async (): Promise<{ updated: number, notUpdated: number, total: number }> => {
+  try {
+    // Fetch all shops with the location_updated field
+    const response = await fetch(`${DIRECTUS_CONFIG.baseUrl}/items/Shops?fields=id,location_updated`, {
+      headers: {
+        'Authorization': `Bearer ${DIRECTUS_CONFIG.token}`
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching shops from Directus:', response.status);
+      return { updated: 0, notUpdated: 0, total: 0 };
+    }
+
+    const data = await response.json();
+    const shops = data.data || [];
+    
+    // Count shops based on location_updated value
+    const updated = shops.filter(shop => shop.location_updated === true).length;
+    const notUpdated = shops.filter(shop => shop.location_updated === false || shop.location_updated === null).length;
+    const total = shops.length;
+    
+    return { updated, notUpdated, total };
+  } catch (error) {
+    console.error('Error fetching location update stats from Directus:', error);
+    return { updated: 0, notUpdated: 0, total: 0 };
+  }
 };
 

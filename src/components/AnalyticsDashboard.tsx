@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getLocations, getGroups } from '../services/locationService';
+import { getLocations, getGroups, getLocationUpdateStats } from '../services/locationService';
 import { getUsers } from '../services/userService';
 import { Location, Group } from '../types';
 import { 
@@ -15,7 +15,7 @@ import {
   LineElement
 } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
-import { BarChart, PieChart, Calendar, MapPin, Users, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { BarChart, PieChart, Calendar, MapPin, Users, TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle } from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
 
 // Register ChartJS components
@@ -35,6 +35,11 @@ const AnalyticsDashboard: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [updateStats, setUpdateStats] = useState<{ 
+    updated: number, 
+    notUpdated: number, 
+    total: number 
+  }>({ updated: 0, notUpdated: 0, total: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const { isDark } = useDarkMode();
   const [forceUpdate, setForceUpdate] = useState(0);
@@ -72,17 +77,18 @@ const AnalyticsDashboard: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [locationsData, groupsData, usersData] = await Promise.all([
+      const [locationsData, groupsData, usersData, locationUpdateStats] = await Promise.all([
         getLocations(),
         getGroups(),
-        getUsers()
+        getUsers(),
+        getLocationUpdateStats()
       ]);
       
       setLocations(locationsData);
       setGroups(groupsData);
       setUsers(usersData);
+      setUpdateStats(locationUpdateStats);
       
-
     } catch (error) {
       console.error('Error loading analytics data:', error);
     } finally {
@@ -362,11 +368,40 @@ const AnalyticsDashboard: React.FC = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: 'bottom' as const,
         labels: {
-          color: getTextColor()
+          color: getTextColor(),
+          font: {
+            weight: 'bold',
+          },
+          padding: 20
+        }
+      },
+      tooltip: {
+        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        titleColor: isDark ? '#e5e7eb' : '#1e293b',
+        bodyColor: isDark ? '#e5e7eb' : '#1e293b',
+        borderColor: isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.7)',
+        borderWidth: 1,
+        padding: 10,
+        boxPadding: 4,
+        cornerRadius: 8,
+        displayColors: true,
+        usePointStyle: true,
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw as number;
+            const total = (context.dataset.data as number[]).reduce((a, b) => a + b, 0);
+            const percentage = Math.round((value / total) * 100);
+            return `${label}: ${value} (${percentage}%)`;
+          }
         }
       }
+    },
+    animation: {
+      duration: 1000,
+      easing: 'easeOutQuart'
     }
   });
 
@@ -522,6 +557,21 @@ const AnalyticsDashboard: React.FC = () => {
   
   const weeklyChangePercentage = getWeeklyChangePercentage();
 
+  // Calculate percentage of updated locations
+  const getUpdatePercentage = () => {
+    if (updateStats.total === 0) return 0;
+    return Math.round((updateStats.updated / updateStats.total) * 100);
+  };
+
+  const updatePercentage = getUpdatePercentage();
+
+  // Calculate missing locations (locations in Supabase - updated locations in Directus)
+  const getMissingLocations = () => {
+    return Math.max(0, locations.length - updateStats.updated);
+  };
+  
+  const missingLocations = getMissingLocations();
+
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 animate-pulse">
@@ -566,7 +616,36 @@ const AnalyticsDashboard: React.FC = () => {
       <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-6">Analytics Dashboard</h2>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* New Location Update Status Card */}
+        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-100 dark:border-purple-800">
+          <div className="flex items-center">
+            <CheckCircle className="h-8 w-8 text-purple-500 dark:text-purple-400 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-purple-600 dark:text-purple-300">Location Updated onto the Back-Office</h3>
+              <div className="flex items-center">
+                <p className="text-2xl font-bold text-purple-700 dark:text-purple-200">
+                  {updateStats.updated}/{updateStats.total}
+                </p>
+                <div className="flex items-center ml-2 text-sm text-purple-600 dark:text-purple-400">
+                  {updatePercentage}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Missing Locations Card - Added in 2nd position */}
+        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-100 dark:border-purple-800">
+          <div className="flex items-center">
+            <AlertTriangle className="h-8 w-8 text-purple-500 dark:text-purple-400 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-purple-600 dark:text-purple-300">Missing Locations</h3>
+              <p className="text-2xl font-bold text-purple-700 dark:text-purple-200">{missingLocations}</p>
+            </div>
+          </div>
+        </div>
+        
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
           <div className="flex items-center">
             <MapPin className="h-8 w-8 text-blue-500 dark:text-blue-400 mr-3" />
@@ -626,10 +705,44 @@ const AnalyticsDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+       
       </div>
       
       {/* Charts - key={forceUpdate} forces re-render when theme changes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        
+        {/* Location Update Status Chart */}
+        <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
+            <CheckCircle size={20} className="mr-2 text-purple-500" />
+            Location Update Status
+          </h3>
+          <div className="h-64 flex items-center justify-center">
+            <Pie 
+              key={`update-status-chart-${forceUpdate}`}
+              data={{
+                labels: ['Updated', 'Not Updated'],
+                datasets: [
+                  {
+                    data: [updateStats.updated, updateStats.notUpdated],
+                    backgroundColor: [
+                      isDark ? 'rgba(139, 92, 246, 0.7)' : 'rgba(139, 92, 246, 0.5)',
+                      isDark ? 'rgba(209, 213, 219, 0.7)' : 'rgba(209, 213, 219, 0.5)'
+                    ],
+                    borderColor: [
+                      isDark ? 'rgb(139, 92, 246)' : 'rgb(124, 58, 237)',
+                      isDark ? 'rgb(156, 163, 175)' : 'rgb(107, 114, 128)'
+                    ],
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+              options={getPieChartOptions()}
+            />
+          </div>
+        </div>
+        
         <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
           <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
             <BarChart size={20} className="mr-2 text-blue-500" />
@@ -696,11 +809,18 @@ const AnalyticsDashboard: React.FC = () => {
         </div>
         
       </div>
+
     </div>
   );
 };
 
 export default AnalyticsDashboard;
+
+
+
+
+
+
 
 
 
