@@ -15,7 +15,23 @@ import {
   LineElement
 } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
-import { BarChart, PieChart, Calendar, MapPin, Users, TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle } from 'lucide-react';
+import { 
+  BarChart as BarChartIcon, 
+  PieChart as PieChartIcon, 
+  Calendar, 
+  Tag, 
+  Map, 
+  ArrowUp, 
+  ArrowDown,
+  Database,
+  CheckCircle,
+  Loader2,
+  AlertTriangle,
+  MapPin,
+  TrendingUp,
+  TrendingDown,
+  Minus
+} from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
 
 // Register ChartJS components
@@ -48,7 +64,7 @@ const AnalyticsDashboard: React.FC = () => {
   const barChartRef = useRef<ChartJS>(null);
   const pieChartRef = useRef<ChartJS>(null);
   const lineChartRef = useRef<ChartJS>(null);
-  const userChartRef = useRef<ChartJS>(null);
+  // Remove: const userChartRef = useRef<ChartJS>(null);
 
   // Force chart update when theme changes
   useEffect(() => {
@@ -65,9 +81,9 @@ const AnalyticsDashboard: React.FC = () => {
     if (lineChartRef.current) {
       lineChartRef.current.update();
     }
-    if (userChartRef.current) {
-      userChartRef.current.update();
-    }
+    // Remove: if (userChartRef.current) {
+    //   userChartRef.current.update();
+    // }
   }, [isDark]);
 
   useEffect(() => {
@@ -640,17 +656,29 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="flex items-center">
             <AlertTriangle className="h-8 w-8 text-purple-500 dark:text-purple-400 mr-3" />
             <div>
-              <h3 className="text-sm font-medium text-purple-600 dark:text-purple-300">Missing Locations</h3>
+              <h3 className="text-sm font-medium text-purple-600 dark:text-purple-300">Missing Locations on Back-Office</h3>
               <p className="text-2xl font-bold text-purple-700 dark:text-purple-200">{missingLocations}</p>
             </div>
           </div>
         </div>
         
+        <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-4 border border-teal-100 dark:border-teal-800">
+          <div className="flex items-center">
+            <PieChartIcon className="h-8 w-8 text-teal-500 dark:text-teal-400 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-teal-600 dark:text-teal-300">No. of Groups/Malls</h3>
+              <p className="text-2xl font-bold text-teal-700 dark:text-teal-200">{groups.length}</p>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
           <div className="flex items-center">
             <MapPin className="h-8 w-8 text-blue-500 dark:text-blue-400 mr-3" />
             <div>
-              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300">Saved Locations</h3>
+              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300">No. of Saved Locations</h3>
               <p className="text-2xl font-bold text-blue-700 dark:text-blue-200">{locations.length}</p>
             </div>
           </div>
@@ -660,7 +688,7 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="flex items-center">
             <Calendar className="h-8 w-8 text-blue-500 dark:text-blue-400 mr-3" />
             <div>
-              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300">Last 7 Days</h3>
+              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300">No. saved last 7 Days</h3>
               <div className="flex items-center">
                 <p className="text-2xl font-bold text-blue-700 dark:text-blue-200">{locationsLastWeek}</p>
                 {weeklyChangePercentage !== 0 && (
@@ -684,33 +712,11 @@ const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-4 border border-teal-100 dark:border-teal-800">
-          <div className="flex items-center">
-            <PieChart className="h-8 w-8 text-teal-500 dark:text-teal-400 mr-3" />
-            <div>
-              <h3 className="text-sm font-medium text-teal-600 dark:text-teal-300">Groups</h3>
-              <p className="text-2xl font-bold text-teal-700 dark:text-teal-200">{groups.length}</p>
-            </div>
-          </div>
-        </div>
         
-        <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-4 border border-teal-100 dark:border-teal-800">
-          <div className="flex items-center">
-            <Users className="h-8 w-8 text-teal-500 dark:text-teal-400 mr-3" />
-            <div>
-              <h3 className="text-sm font-medium text-teal-600 dark:text-teal-300">Total Users</h3>
-              <p className="text-2xl font-bold text-teal-700 dark:text-teal-200">
-                {Object.keys(userDataRaw).length - (userDataRaw['Anonymous'] > 0 ? 1 : 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-       
       </div>
       
       {/* Charts - key={forceUpdate} forces re-render when theme changes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         
         {/* Location Update Status Chart */}
         <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
@@ -742,10 +748,31 @@ const AnalyticsDashboard: React.FC = () => {
             />
           </div>
         </div>
-        
-        <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
+
+         <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
           <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
-            <BarChart size={20} className="mr-2 text-blue-500" />
+            <PieChartIcon size={20} className="mr-2 text-teal-500" />
+            Locations by Group
+          </h3>
+          <div className="h-64 flex items-center justify-center">
+            <Pie 
+              key={`pie-chart-${forceUpdate}`}
+              ref={pieChartRef}
+              data={groupChartData} 
+              options={getPieChartOptions()}
+            />
+          </div>
+        </div>
+        
+        
+      </div>
+      
+      {/* User Chart and Daily Trend Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+    <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
+            <BarChartIcon size={20} className="mr-2 text-blue-500" />
             Monthly Trend
           </h3>
           <div className="h-64">
@@ -772,42 +799,8 @@ const AnalyticsDashboard: React.FC = () => {
             />
           </div>
         </div>
-      </div>
-      
-      {/* User Chart and Daily Trend Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+       
 
-    
-        <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
-            <PieChart size={20} className="mr-2 text-teal-500" />
-            Locations by Group
-          </h3>
-          <div className="h-64 flex items-center justify-center">
-            <Pie 
-              key={`pie-chart-${forceUpdate}`}
-              ref={pieChartRef}
-              data={groupChartData} 
-              options={getPieChartOptions()}
-            />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600">
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
-            <Users size={20} className="mr-2 text-teal-500" />
-            Locations by User
-          </h3>
-          <div className="h-64">
-            <Bar 
-              key={`user-chart-${forceUpdate}`}
-              ref={userChartRef}
-              data={userChartData} 
-              options={getUserChartOptions()}
-            />
-          </div>
-        </div>
-        
       </div>
 
     </div>

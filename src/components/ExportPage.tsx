@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getLocations, getGroups, exportToExcel } from '../services/locationService';
-import { exportToCSVFile } from '../utils/exportUtils';
+import { getLocations, getGroups, exportToExcel, getLocationUpdateStats } from '../services/locationService';
+import { exportToCSVFile, exportDirectusLocationsToCSV } from '../utils/exportUtils';
 import Datepicker from 'react-tailwindcss-datepicker';
 import { 
   FileDown, 
@@ -506,6 +506,45 @@ const ExportPage: React.FC = () => {
               </span>
             </div>
           )}
+        </div>
+
+        {/* Add a discreet button for exporting only locations with directus_id */}
+        <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center">
+            
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            This option exports only locations that can be synchronized with the back-office system.
+          </p>
+          <button
+              onClick={async () => {
+                try {
+                  setIsExporting(true);
+                  const locations = await getLocations();
+                  const groups = await getGroups() || [];
+                  exportDirectusLocationsToCSV(locations, groups);
+                  setLastExport(new Date().toLocaleString());
+                } catch (error) {
+                  console.error("Error exporting locations:", error);
+                } finally {
+                  setIsExporting(false);
+                }
+              }}
+              disabled={isExporting}
+              className="text-sm flex items-center justify-center px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 rounded transition-all duration-200"
+            >
+              {isExporting ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-700 dark:border-gray-300 mr-1"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Database size={12} className="mr-1" />
+                  Export Only Locations with Shop IDs
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

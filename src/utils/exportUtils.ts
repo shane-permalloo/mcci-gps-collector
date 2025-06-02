@@ -92,4 +92,26 @@ export const exportToCSVFile = (locations: Location[], groups: Group[]): void =>
   downloadCSV(csvContent, filename);
 };
 
+/**
+ * Exports only locations with non-null directus_id to CSV
+ * Uses the same format as the regular CSV export
+ */
+export const exportDirectusLocationsToCSV = (locations: Location[], groups: Group[]): void => {
+  // Filter locations to only include those with non-null directus_id
+  const directusLocations = locations.filter(location => location.directusId != null);
+  
+  if (directusLocations.length === 0) {
+    alert('No locations with Directus IDs found. Please assign Directus IDs to locations first.');
+    return;
+  }
+  
+  // Use the existing locationsToCSV function to convert to CSV format
+  const csvContent = locationsToCSV(directusLocations, groups);
+  
+  // Create a filename with directus-only indicator
+  const filename = `Directus-Locations-${new Date().toISOString().slice(0, 10)}-${Math.floor(Math.random() * 90000) + 10000}.csv`;
+  
+  // Use the existing downloadCSV function
+  downloadCSV(csvContent, filename);
+};
 
