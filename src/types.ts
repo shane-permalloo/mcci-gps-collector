@@ -1,9 +1,12 @@
-// Add User type if it doesn't exist
-export interface User {
+export interface Location {
   id: string;
-  email?: string;
-  name?: string;
-  created_at?: string;
-  updated_at?: string;
-  active?: boolean;
+  title: string;
+  latitude: number;
+  longitude: number;
+  description: string;
+  tags: string[];
+  groupId: string;
+  createdAt: number;
+  directusId?: string;
+  isOwner?: boolean;
 }

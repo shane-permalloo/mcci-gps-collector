@@ -34,6 +34,8 @@ export const getLocations = async (): Promise<Location[]> => {
         tags: item.tags || [],
         groupId: item.group_id || "default",
         createdAt: new Date(item.created_at).getTime(),
+        // Add isOwner property by comparing the user_id with the current user's ID
+        isOwner: item.user_id === user.id
       };
 
       // Only add directusId if it exists in the database record
@@ -142,6 +144,8 @@ export const updateLocation = async (location: Location): Promise<void> => {
   }
 
   try {
+    console.log(`Updating location ${location.id}, user_id: ${user.id}`);
+    
     const { error } = await supabase
       .from("locations")
       .update({
@@ -174,6 +178,8 @@ export const deleteLocation = async (id: string): Promise<void> => {
   }
 
   try {
+    console.log(`Deleting location ${id}, user_id: ${user.id}`);
+    
     const { error } = await supabase
       .from("locations")
       .delete()

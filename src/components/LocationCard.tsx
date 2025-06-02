@@ -23,7 +23,10 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   const formattedDate = new Date(location.createdAt).toLocaleString();
   
   // Use the isOwner property directly from the location object
-  const isOwner = location.isOwner;
+  // Default to false if not provided
+  const isOwner = location.isOwner === true;
+
+  console.log(`Location ${location.id} isOwner: ${isOwner}`);
 
   const handleSave = () => {
     if (!editedTitle.trim()) {
