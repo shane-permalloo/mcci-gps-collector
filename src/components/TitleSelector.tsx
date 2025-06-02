@@ -5,10 +5,12 @@ import { Search, Plus } from 'lucide-react';
 interface ImportedLocation {
   id: number;
   title: string;
+  mall?: string;
+  region?: string;
 }
 
 interface TitleSelectorProps {
-  onTitleSelect: (title: string) => void;
+  onTitleSelect: (title: string, directusId?: string) => void;
   value: string;
 }
 
@@ -19,6 +21,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddNew, setShowAddNew] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadImportedLocations();
@@ -60,18 +63,26 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
     setSearchTerm(newValue);
-    onTitleSelect(newValue);
+    
+    // If the field is cleared, also clear the title
+    if (newValue === '') {
+      onTitleSelect('');
+    }
+    
     setIsOpen(true);
   };
 
-  const handleTitleSelect = (title: string) => {
-    onTitleSelect(title);
+  const handleTitleSelect = (title: string, id?: string) => {
+    console.log(`Selected title: ${title}, ID: ${id || 'none'}`);
+    onTitleSelect(title, id);
     setSearchTerm(title);
     setIsOpen(false);
   };
 
   const handleAddNew = () => {
-    handleTitleSelect(searchTerm.trim());
+    console.log(`Adding new title: ${searchTerm.trim()}`);
+    // Add the current search term as a new title
+    onTitleSelect(searchTerm.trim());
     setIsOpen(false);
   };
 
@@ -93,52 +104,71 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
     <div className="relative" ref={dropdownRef}>
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
-          className="w-full px-4 py-2 pl-10 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-          placeholder="Search or enter new title"
+          className="w-full px-4 py-2 pl-10 pr-12 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+          placeholder="Search for existing titles or type new one"
         />
         <Search 
           size={18} 
           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
         />
+        
         {showAddNew && (
           <button
             onClick={handleAddNew}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-full p-1 transition-colors"
             title="Add as new title"
           >
-            <Plus size={18} />
+            <Plus size={20} />
           </button>
         )}
       </div>
+      
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
+        Select from dropdown or click + to add a new title
+      </p>
 
       {showDropdown && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-10 w-full mt-6 bg-white dark:bg-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
           {filteredLocations.length > 0 ? (
             <ul className="py-1">
-              {filteredLocations.map((location) => (
-                <li
-                  key={location.id}
-                  className={`px-4 py-2 cursor-pointer text-gray-600 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 ${
-                    location.title.toLowerCase() === searchTerm.toLowerCase()
-                      ? 'bg-gray-100 dark:bg-gray-600'
-                      : ''
-                  }`}
-                  onClick={() => handleTitleSelect(location.title)}
-                >
-                  {location.title}
-                </li>
-              ))}
+              {filteredLocations.map((location) => {
+                // Create a display title that includes the mall name if available
+                const displayTitle = location.mall 
+                  ? `${location.title} (${location.mall})` 
+                  : location.title;
+                
+                return (
+                  <li
+                    key={location.id}
+                    className={`px-4 py-2 cursor-pointer text-gray-600 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 ${
+                      location.title.toLowerCase() === searchTerm.toLowerCase()
+                        ? 'bg-gray-100 dark:bg-gray-600'
+                        : ''
+                    }`}
+                    onClick={() => handleTitleSelect(displayTitle, location.id.toString())}
+                  >
+                    <div className="flex flex-col">
+                      <span>{displayTitle}</span>
+                      <div className="flex text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {location.region && <span>Region: {location.region}</span>}
+                        <span className="ml-auto">ID: {location.id}</span>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <div className="px-4 py-2 text-gray-500 dark:text-gray-400 flex items-center justify-between">
               <span>No matching titles found</span>
               <button
                 onClick={handleAddNew}
-                className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
+                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-md px-3 py-1 flex items-center transition-colors"
               >
                 <Plus size={16} className="mr-1" />
                 Add New

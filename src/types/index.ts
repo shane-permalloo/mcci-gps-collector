@@ -3,12 +3,9 @@ export interface Location {
   title: string;
   latitude: number;
   longitude: number;
-  description: string;
-  tags: string[];
-  groupId: string;
   createdAt: number;
-  userId?: string;
-  isOwner?: boolean;
+  groupId?: string;
+  directusId?: string; // Add this field to store the Directus shop ID
 }
 
 export interface Group {

@@ -1,87 +1,132 @@
 import { Location, Group } from "../types";
 import * as Excel from "exceljs";
 import { supabase } from "../lib/supabase";
+import { v4 as uuidv4 } from 'uuid';
 import { DIRECTUS_CONFIG } from '../utils/csvImportUtils';
 
 const DEFAULT_GROUPS: Group[] = [
   { id: "default", name: "Default", color: "25252500" },
 ];
 
-// Get all locations
+// Get all locations for the current user
 export const getLocations = async (): Promise<Location[]> => {
   try {
-    // Get the current user first
+    // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id;
-
-    const { data: locations, error } = await supabase
-      .from("locations")
-      .select("*");
-
-    if (error) {
-      console.error("Error fetching locations:", error);
-      throw error;
+    if (!user) {
+      throw new Error("User must be authenticated to get locations");
     }
 
-    return locations.map(location => ({
-      id: location.id,
-      title: location.title,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      description: location.description || "",
-      tags: location.tags || [],
-      groupId: location.group_id || "default",
-      userId: location.user_id,
-      createdAt: new Date(location.created_at).getTime(),
-      isOwner: currentUserId === location.user_id
-    }));
+    const { data, error } = await supabase
+      .from("locations")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(item => {
+      const location: Location = {
+        id: item.id,
+        title: item.title,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        description: item.description || "",
+        tags: item.tags || [],
+        groupId: item.group_id || "default",
+        createdAt: new Date(item.created_at).getTime(),
+      };
+
+      // Only add directusId if it exists in the database record
+      if ('directus_id' in item && item.directus_id) {
+        location.directusId = item.directus_id;
+      }
+
+      return location;
+    });
   } catch (error) {
-    console.error("Failed to fetch locations:", error);
-    throw error;
+    console.error("Failed to get locations:", error);
+    return [];
   }
 };
 
 // Save a new location
 export const saveLocation = async (location: Location): Promise<void> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error("User must be authenticated to save locations");
-  }
-
   try {
-    // Save the location
-    const { error: locationError } = await supabase.from("locations").insert({
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("User must be authenticated to save locations");
+    }
+
+    // Create the location data object with user_id
+    const locationData = {
       id: location.id,
       title: location.title,
       latitude: location.latitude,
       longitude: location.longitude,
-      description: location.description,
-      tags: location.tags,
+      description: location.description || null,
+      tags: location.tags || [],
+      // Only set group_id if it's not "default" - otherwise set to null
       group_id: location.groupId === "default" ? null : location.groupId,
       created_at: new Date(location.createdAt).toISOString(),
-      user_id: user.id,
-    });
+      user_id: user.id // Make sure user_id is included
+    };
 
-    if (locationError) {
-      throw locationError;
+    // Add directus_id if it exists
+    if (location.directusId) {
+      locationData['directus_id'] = location.directusId;
     }
 
-    // Generate a random 3-digit ID for imported_locations
-    const randomId = Math.floor(Math.random() * (999 - 100 + 1)) + 100;
+    console.log("Saving location data:", JSON.stringify(locationData, null, 2));
 
-    // Add to imported_locations if it doesn't exist
-    const { error: importError } = await supabase
-      .from("imported_locations")
-      .insert({ 
+    // Save to Supabase
+    const { error } = await supabase
+      .from("locations")
+      .insert(locationData);
+
+    if (error) {
+      console.error("Error saving to Supabase:", error);
+      throw error;
+    }
+
+    // For imported_locations, we don't need to add user_id as it's not required
+    try {
+      // Generate a random 3-digit ID for imported_locations
+      const randomId = Math.floor(Math.random() * (999 - 100 + 1)) + 100;
+
+      // Create the imported location data
+      const importedLocationData: any = {
         id: randomId,
-        title: location.title 
-      })
-      .select()
-      .maybeSingle();
+        title: location.title,
+      };
 
-    // Ignore duplicate title errors
-    if (importError && !importError.message.includes('duplicate')) {
-      throw importError;
+      // Only add directus_id if it exists
+      if (location.directusId) {
+        importedLocationData.directus_id = location.directusId;
+      }
+
+      console.log("Saving imported location data:", JSON.stringify(importedLocationData, null, 2));
+
+      // Add to imported_locations if it doesn't exist
+      const { error: importError } = await supabase
+        .from("imported_locations")
+        .insert(importedLocationData)
+        .select()
+        .maybeSingle();
+
+      // Ignore duplicate title errors
+      if (importError) {
+        console.error("Import error:", importError);
+        
+        if (importError.message.includes('duplicate')) {
+          console.log("Ignoring duplicate import error");
+        } else {
+          console.error("Non-duplicate import error:", importError);
+        }
+      }
+    } catch (importErr) {
+      // Log but don't throw - we want the main location save to succeed even if imported_locations fails
+      console.error("Failed to save to imported_locations:", importErr);
     }
   } catch (error) {
     console.error("Failed to save location:", error);
@@ -105,6 +150,7 @@ export const updateLocation = async (location: Location): Promise<void> => {
         longitude: location.longitude,
         description: location.description,
         tags: location.tags,
+        // Only set group_id if it's not "default" - otherwise set to null
         group_id: location.groupId === "default" ? null : location.groupId,
       })
       .eq("id", location.id)
@@ -251,25 +297,51 @@ export const deleteGroup = async (id: string): Promise<void> => {
 interface ImportedLocation {
   id: number;
   title: string;
+  mall: string;
+  region: string;
 }
 
-// Get imported locations
+// Get imported locations with IDs
 export const getImportedLocations = async (): Promise<ImportedLocation[]> => {
   try {
-    const { data: importedLocations, error } = await supabase
-      .from("imported_locations")
-      .select("id, title")
-      .order('title');
+    // Use the DIRECTUS_CONFIG to fetch from Directus API
+    const response = await fetch(`${DIRECTUS_CONFIG.baseUrl}/items/Shops?fields=id,shop_name,shop_malls.Malls_id.mall_name,shop_region.region_name`, {
+      headers: {
+        'Authorization': `Bearer ${DIRECTUS_CONFIG.token}`
+      }
+    });
 
-    if (error) {
-      console.error("Error fetching imported locations:", error);
-      throw error;
+    if (!response.ok) {
+      console.error("Error fetching shops from Directus:", response.status);
+      return [];
     }
 
-    return importedLocations;
+    const data = await response.json();
+    const shops = data.data || [];
+
+    // Map Directus response to ImportedLocation format
+    return shops.map(shop => {
+      // Handle multiple mall names by taking the first one if it exists
+      let mallName = '';
+      if (shop.shop_malls && Array.isArray(shop.shop_malls)) {
+        // If shop_malls is an array, take the first mall's name
+        const firstMall = shop.shop_malls[0]?.Malls_id?.mall_name;
+        if (firstMall) mallName = firstMall;
+      } else if (shop.shop_malls?.Malls_id?.mall_name) {
+        // If shop_malls is a single object
+        mallName = shop.shop_malls.Malls_id.mall_name;
+      }
+
+      return {
+        id: shop.id,
+        title: shop.shop_name,
+        mall: mallName,
+        region: shop.shop_region?.region_name || ''
+      };
+    });
   } catch (error) {
-    console.error("Failed to fetch imported locations:", error);
-    throw error;
+    console.error("Failed to fetch shops from Directus:", error);
+    return [];
   }
 };
 

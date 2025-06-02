@@ -25,8 +25,11 @@ export const locationsToCSV = (locations: Location[], groups: Group[]): string =
       `[${location.longitude.toFixed(7)},${location.latitude.toFixed(7)}]` :
       '';
 
+    // Use the directusId if available, otherwise use 'XXX' as placeholder
+    const id = location.directusId || 'XXX';
+
     return [
-      'XXX', // Placeholder ID - user must replace with actual Directus shop ID
+      id, // Use directusId if available
       location.title,
       mallsJson,
       coordinates ? 'Point' : '', // Only add 'Point' if coordinates exist
@@ -40,7 +43,7 @@ export const locationsToCSV = (locations: Location[], groups: Group[]): string =
     ...rows.map(row => row.map((cell, index) => {
       // Handle special formatting to match test-shops.csv format
       if (index === 0) {
-        // ID field - no quotes for XXX
+        // ID field - no quotes for IDs
         return String(cell);
       } else if (index === 2) {
         // shop_malls field - no quotes for arrays

@@ -127,18 +127,6 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           </div>
         </div>
         
-        {isEditing ? (
-          <textarea
-            value={editedDescription}
-            onChange={(e) => setEditedDescription(e.target.value)}
-            rows={1}
-            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white mb-3"
-            placeholder="Add a description..."
-          />
-        ) : location.description && (
-          <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{location.description}</p>
-        )}
-        
           {isEditing ? (
         <div className="flex items-start mb-3">
             <input
@@ -163,6 +151,19 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
         </div>
             </div>
           )}
+
+            
+        {isEditing ? (
+          <textarea
+            value={editedDescription}
+            onChange={(e) => setEditedDescription(e.target.value)}
+            rows={1}
+            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white mb-3"
+            placeholder="Add a description..."
+          />
+        ) : location.description && (
+          <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{location.description}</p>
+        )}
 
         {isEditing && (
           <div className="mb-3">
