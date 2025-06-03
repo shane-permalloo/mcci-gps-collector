@@ -29,12 +29,15 @@ import {
   Search
 } from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, LayersControl, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { divIcon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
 import 'leaflet-defaulticon-compatibility';
+import 'leaflet.fullscreen/Control.FullScreen.css';
+import { FullscreenControl } from 'react-leaflet-fullscreen';
+const { BaseLayer } = LayersControl;
 
 // Register ChartJS components
 ChartJS.register(
@@ -770,11 +773,24 @@ const AnalyticsDashboard: React.FC = () => {
               zoom={13}
               style={{ height: '100%', width: '100%' }}
               className="rounded-lg"
+              zoomControl={false} // Disable default zoom control
             >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
+              <LayersControl position="topright">
+                <BaseLayer checked name="OpenStreetMap">
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                </BaseLayer>
+                <BaseLayer name="Satellite">
+                  <TileLayer
+                    attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  />
+                </BaseLayer>
+              </LayersControl>
+              <ZoomControl position="topright" /> {/* Keep only this zoom control */}
+              <FullscreenControl position="topright" />
               <MarkerClusterGroup
                 chunkedLoading
                 zoomToBoundsOnClick={true}
