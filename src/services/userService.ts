@@ -20,7 +20,7 @@ export const getUsers = async (): Promise<User[]> => {
       .not('user_id', 'is', null);
       
     if (locationsError) {
-      console.error('Error fetching location users:', locationsError);
+      // console.error('Error fetching location users:', locationsError);
       return [];
     }
     
@@ -54,7 +54,7 @@ export const getUsers = async (): Promise<User[]> => {
     
     return users;
   } catch (error) {
-    console.error('Error in getUsers:', error);
+    // console.error('Error in getUsers:', error);
     return [];
   }
 };
@@ -75,10 +75,13 @@ export const getCurrentUser = async (): Promise<User | null> => {
       active: true
     };
   } catch (error) {
-    console.error('Error in getCurrentUser:', error);
+    // console.error('Error in getCurrentUser:', error);
     return null;
   }
 };
+
+
+
 
 
 

@@ -29,12 +29,12 @@ const CSVImport: React.FC = () => {
     const fileName = file.name.toLowerCase();
     const hasCSVExtension = fileName.endsWith(".csv");
 
-    console.log("File validation:", {
-      name: fileName,
-      type: file.type,
-      hasCSVExtension,
-      size: file.size,
-    });
+    // console.log("File validation:", {
+    //   name: fileName,
+    //   type: file.type,
+    //   hasCSVExtension,
+    //   size: file.size,
+    // });
 
     // For CSV files, we'll primarily rely on the file extension
     // since MIME types can be inconsistent across browsers and systems
@@ -42,28 +42,28 @@ const CSVImport: React.FC = () => {
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("handleFileSelect called");
+    // console.log("handleFileSelect called");
     const selectedFile = event.target.files?.[0];
-    console.log("Selected file:", selectedFile);
+    // console.log("Selected file:", selectedFile);
 
     if (selectedFile) {
-      console.log("File details:", {
-        name: selectedFile.name,
-        type: selectedFile.type,
-        size: selectedFile.size,
-      });
+      // console.log("File details:", {
+      //   name: selectedFile.name,
+      //   type: selectedFile.type,
+      //   size: selectedFile.size,
+      // });
 
       if (isValidCSVFile(selectedFile)) {
-        console.log("File is valid, setting file state");
+        //console.log("File is valid, setting file state");
         setFile(selectedFile);
         setErrorMessage("");
       } else {
-        console.log("File is invalid");
+        // console.log("File is invalid");
         setErrorMessage(`Invalid file: "${selectedFile.name}". Please select a CSV file with .csv extension.`);
         setFile(null);
       }
     } else {
-      console.log("No file selected");
+      // console.log("No file selected");
       setErrorMessage("No file selected");
       setFile(null);
     }

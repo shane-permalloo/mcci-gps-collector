@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLocations, getGroups, exportToExcel, getLocationUpdateStats } from '../services/locationService';
+import { getLocations, getGroups, exportToExcel } from '../services/locationService';
 import { exportToCSVFile, exportDirectusLocationsToCSV } from '../utils/exportUtils';
 import Datepicker from 'react-tailwindcss-datepicker';
 import { 
@@ -241,12 +241,12 @@ const ExportPage: React.FC = () => {
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+        <div className="flex md:items-center justify-between md:flex-row flex-col items-start">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-4">
             <FileDown className="mr-3" size={24} />
             Export Locations
           </h2>
-          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-4">
             <Database size={16} className="mr-1" />
             <span>{locationCount} locations</span>
           </div>
@@ -509,10 +509,10 @@ const ExportPage: React.FC = () => {
         </div>
 
         {/* Add a discreet button for exporting only locations with directus_id */}
-        <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-center">
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center flex-col md:flex-row">
             
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 my-2">
             This option exports only locations that can be synchronized with the back-office system.
           </p>
           <button
@@ -539,7 +539,7 @@ const ExportPage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Database size={12} className="mr-1" />
+                  <Database size={16} className="mr-1" />
                   Export Only Locations with Shop IDs
                 </>
               )}

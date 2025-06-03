@@ -163,7 +163,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ onLocationSaved }) => {
   };
   
   const handleTitleSelect = (selectedTitle: string, directusId?: string) => {
-    console.log(`Title selected: ${selectedTitle}, DirectusID: ${directusId || 'none'}`);
+    // console.log(`Title selected: ${selectedTitle}, DirectusID: ${directusId || 'none'}`);
     setTitle(selectedTitle);
     setSelectedDirectusId(directusId || null);
   };

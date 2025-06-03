@@ -1,7 +1,6 @@
 import { Location, Group } from "../types";
 import * as Excel from "exceljs";
 import { supabase } from "../lib/supabase";
-import { v4 as uuidv4 } from 'uuid';
 import { DIRECTUS_CONFIG } from '../utils/csvImportUtils';
 
 const DEFAULT_GROUPS: Group[] = [
@@ -107,7 +106,7 @@ export const saveLocation = async (location: Location): Promise<void> => {
         importedLocationData.directus_id = location.directusId;
       }
 
-      console.log("Saving imported location data:", JSON.stringify(importedLocationData, null, 2));
+      // console.log("Saving imported location data:", JSON.stringify(importedLocationData, null, 2));
 
       // Add to imported_locations if it doesn't exist
       const { error: importError } = await supabase
@@ -118,17 +117,17 @@ export const saveLocation = async (location: Location): Promise<void> => {
 
       // Ignore duplicate title errors
       if (importError) {
-        console.error("Import error:", importError);
+        // console.error("Import error:", importError);
         
         if (importError.message.includes('duplicate')) {
-          console.log("Ignoring duplicate import error");
+          // console.log("Ignoring duplicate import error");
         } else {
-          console.error("Non-duplicate import error:", importError);
+          // console.error("Non-duplicate import error:", importError);
         }
       }
     } catch (importErr) {
       // Log but don't throw - we want the main location save to succeed even if imported_locations fails
-      console.error("Failed to save to imported_locations:", importErr);
+      // console.error("Failed to save to imported_locations:", importErr);
     }
   } catch (error) {
     console.error("Failed to save location:", error);
@@ -144,7 +143,7 @@ export const updateLocation = async (location: Location): Promise<void> => {
   }
 
   try {
-    console.log(`Updating location ${location.id}, user_id: ${user.id}`);
+    // console.log(`Updating location ${location.id}, user_id: ${user.id}`);
     
     const { error } = await supabase
       .from("locations")
@@ -326,7 +325,7 @@ export const getImportedLocations = async (): Promise<ImportedLocation[]> => {
     const shops = data.data || [];
 
     // Map Directus response to ImportedLocation format
-    return shops.map(shop => {
+    return shops.map((shop) => {
       // Handle multiple mall names by taking the first one if it exists
       let mallName = '';
       if (shop.shop_malls && Array.isArray(shop.shop_malls)) {
@@ -469,8 +468,8 @@ export const getLocationUpdateStats = async (): Promise<{ updated: number, notUp
     const shops = data.data || [];
     
     // Count shops based on location_updated value
-    const updated = shops.filter(shop => shop.location_updated === true).length;
-    const notUpdated = shops.filter(shop => shop.location_updated === false || shop.location_updated === null).length;
+    const updated = shops.filter((shop: { location_updated: boolean | null }) => shop.location_updated === true).length;
+    const notUpdated = shops.filter((shop: { location_updated: boolean | null }) => shop.location_updated === false || shop.location_updated === null).length;
     const total = shops.length;
     
     return { updated, notUpdated, total };

@@ -26,7 +26,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   // Default to false if not provided
   const isOwner = location.isOwner === true;
 
-  console.log(`Location ${location.id} isOwner: ${isOwner}`);
+  // console.log(`Location ${location.id} isOwner: ${isOwner}`);
 
   const handleSave = () => {
     if (!editedTitle.trim()) {

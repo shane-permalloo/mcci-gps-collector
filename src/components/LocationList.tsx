@@ -49,12 +49,12 @@ const LocationList: React.FC = () => {
   const handleDeleteLocation = async (id: string) => {
     setIsDeleting(true);
     try {
-      console.log(`Attempting to delete location ${id}`);
+      // console.log(`Attempting to delete location ${id}`);
       await deleteLocation(id);
-      console.log(`Successfully deleted location ${id}`);
+      // console.log(`Successfully deleted location ${id}`);
       await loadData();
     } catch (error) {
-      console.error('Error deleting location:', error);
+      // console.error('Error deleting location:', error);
       alert('Failed to delete location. You can only delete your own locations.');
     } finally {
       setIsDeleting(false);

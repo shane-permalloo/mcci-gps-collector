@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getLocations, getGroups, getLocationUpdateStats } from '../services/locationService';
-import { getUsers } from '../services/userService';
+import { getUsers, User } from '../services/userService';
 import { Location, Group } from '../types';
 import { 
   Chart as ChartJS, 
@@ -18,14 +18,8 @@ import { Bar, Pie, Line } from 'react-chartjs-2';
 import { 
   BarChart as BarChartIcon, 
   PieChart as PieChartIcon, 
-  Calendar, 
-  Tag, 
-  Map, 
-  ArrowUp, 
-  ArrowDown,
-  Database,
+  Calendar,
   CheckCircle,
-  Loader2,
   AlertTriangle,
   MapPin,
   TrendingUp,
@@ -64,7 +58,6 @@ const AnalyticsDashboard: React.FC = () => {
   const barChartRef = useRef<ChartJS>(null);
   const pieChartRef = useRef<ChartJS>(null);
   const lineChartRef = useRef<ChartJS>(null);
-  // Remove: const userChartRef = useRef<ChartJS>(null);
 
   // Force chart update when theme changes
   useEffect(() => {
@@ -81,9 +74,6 @@ const AnalyticsDashboard: React.FC = () => {
     if (lineChartRef.current) {
       lineChartRef.current.update();
     }
-    // Remove: if (userChartRef.current) {
-    //   userChartRef.current.update();
-    // }
   }, [isDark]);
 
   useEffect(() => {
@@ -260,55 +250,6 @@ const AnalyticsDashboard: React.FC = () => {
     ],
   };
 
-  // Get locations by user
-  const getLocationsByUser = () => {
-    const userData: Record<string, number> = {};
-    
-    // Add "Anonymous" category
-    userData['Anonymous'] = 0;
-    
-    // Count locations by user
-    locations.forEach(location => {
-      if (location.userId) {
-        // Use truncated ID instead of email
-        const displayName = `User ${location.userId.substring(0, 8)}`;
-        
-        userData[displayName] = (userData[displayName] || 0) + 1;
-      } else {
-        userData['Anonymous']++;
-      }
-    });
-    
-    // Remove users with zero locations
-    return Object.fromEntries(
-      Object.entries(userData).filter(([_, count]) => count > 0)
-    );
-  };
-
-  // User chart data - limit to top 10 users if there are many
-  const userDataRaw = getLocationsByUser();
-  const sortedUserEntries = Object.entries(userDataRaw)
-    .sort(([_, countA], [__, countB]) => countB - countA);
-  
-  // Take top 10 users
-  const topUsers = sortedUserEntries.slice(0, 10);
-  const userData = Object.fromEntries(topUsers);
-  
-  // User chart data
-  const userChartData = {
-    labels: Object.keys(userData),
-    datasets: [
-      {
-        label: 'Locations by User',
-        data: Object.values(userData),
-        backgroundColor: 'rgb(75, 192, 192)',
-        borderColor: 'rgba(75, 192, 192, 0.8)',
-        borderWidth: 2,
-        borderRadius: 6
-      },
-    ],
-  };
-
   // Chart options with dynamic colors based on dark mode
   const getBarChartOptions = () => ({
     responsive: true,
@@ -451,83 +392,6 @@ const AnalyticsDashboard: React.FC = () => {
           color: getGridColor()
         }
       }
-    }
-  });
-
-  // Get horizontal bar chart options for user chart
-  const getUserChartOptions = () => ({
-    indexAxis: 'y' as const,
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          color: getTextColor(),
-          font: {
-            weight: 'bold',
-          }
-        }
-      },
-      tooltip: {
-        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-        titleColor: isDark ? '#e5e7eb' : '#1e293b',
-        bodyColor: isDark ? '#e5e7eb' : '#1e293b',
-        borderColor: isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.7)',
-        borderWidth: 1,
-        padding: 10,
-        boxPadding: 4,
-        cornerRadius: 8,
-        displayColors: true,
-        usePointStyle: true,
-      },
-      title: {
-        display: false
-      }
-    },
-    scales: {
-      y: {
-        ticks: {
-          color: getTextColor(),
-          font: {
-            size: 11,
-          },
-          callback: function(value: any) {
-            const label = this.getLabelForValue(value);
-            // Truncate long email addresses
-            return label.length > 25 ? label.substring(0, 22) + '...' : label;
-          }
-        },
-        grid: {
-          color: getGridColor(),
-          drawBorder: false
-        },
-        border: {
-          display: false
-        }
-      },
-      x: {
-        beginAtZero: true,
-        ticks: {
-          color: getTextColor(),
-          font: {
-            size: 11,
-          },
-          precision: 0,
-          stepSize: 1
-        },
-        grid: {
-          color: getGridColor(),
-          drawBorder: false
-        },
-        border: {
-          display: false
-        }
-      }
-    },
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart'
     }
   });
 
