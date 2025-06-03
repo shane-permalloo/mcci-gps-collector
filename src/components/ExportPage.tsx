@@ -12,7 +12,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { showAlert } from '../utils/alertUtils';
+import { showAlert } from '../utils/alertUtils.tsx';
 
 // Define the DateValueType for the datepicker
 interface DateValueType {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Share2, Trash2, X, LogOut, BarChart, Upload, Keyboard } from 'lucide-react';
-import { showAlert, showConfirm } from '../utils/alertUtils';
+import { showAlert, showConfirm } from '../utils/alertUtils.tsx';
 
 interface SidebarProps {
   isOpen: boolean;

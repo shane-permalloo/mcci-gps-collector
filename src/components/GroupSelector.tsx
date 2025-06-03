@@ -3,7 +3,7 @@ import { Group } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { getGroups, saveGroup, deleteGroup } from '../services/locationService';
 import { PlusCircle, Trash2, X, Check } from 'lucide-react';
-import { showAlert } from '../utils/alertUtils';
+import { showAlert, showHtmlConfirm } from '../utils/alertUtils.tsx';
 
 interface GroupSelectorProps {
   selectedGroupId: string;
@@ -69,19 +69,29 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
       return;
     }
     
-    setIsDeleting(true);
-    try {
-      await deleteGroup(groupId);
-      await loadGroups();
-      if (selectedGroupId === groupId) {
-        onGroupSelect('default');
-      }
-      setShowDeleteConfirm(null);
-    } catch (error) {
-      console.error('Error deleting group:', error);
-    } finally {
-      setIsDeleting(false);
-    }
+    showHtmlConfirm(
+      'Confirm Group Deletion',
+      `Are you sure you want to delete the group <strong class="font-bold text-red-600 dark:text-red-400">${groups.find(g => g.id === groupId)?.name}</strong>? All locations in this group will be moved to the default group.`,
+      async () => {
+        setIsDeleting(true);
+        try {
+          await deleteGroup(groupId);
+          await loadGroups();
+          if (selectedGroupId === groupId) {
+            onGroupSelect('default');
+          }
+          setShowDeleteConfirm(null);
+        } catch (error) {
+          console.error('Error deleting group:', error);
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+      () => setShowDeleteConfirm(null),
+      'Delete',
+      'Cancel',
+      true
+    );
   };
 
   const LoadingPlaceholder = () => (

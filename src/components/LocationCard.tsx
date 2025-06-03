@@ -3,7 +3,7 @@ import { Location, Group } from '../types';
 import { MapPin, Trash2, Edit2, X, Check, Info } from 'lucide-react';
 import { updateLocation } from '../services/locationService';
 import GroupSelector from './GroupSelector';
-import { showConfirm } from '../utils/alertUtils';
+import { showHtmlConfirm } from '../utils/alertUtils.tsx';
 
 interface LocationCardProps {
   location: Location;
@@ -59,9 +59,9 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   };
 
   const handleDelete = () => {
-    showConfirm(
+    showHtmlConfirm(
       'Confirm deletion',
-      'Are you sure you want to delete this location?',
+      `Are you sure you want to delete the location: <strong class="font-bold text-red-600 dark:text-red-400">${location.title}</strong>?`,
       () => {
         onDelete(location.id);
       },
