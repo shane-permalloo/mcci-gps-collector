@@ -171,13 +171,6 @@ const LocationForm: React.FC<LocationFormProps> = ({ onLocationSaved }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Save Current Location</h2>
-      
-      {!isUserAuthenticated && (
-        <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-100 rounded-md">
-          <p className="font-medium">Authentication Required</p>
-          <p className="text-sm mt-1">You must be logged in to save locations.</p>
-        </div>
-      )}
 
       <div className="space-y-4">
         <div>

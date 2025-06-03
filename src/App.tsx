@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, MapPin, FileDown, Upload, BarChart, Menu } from 'lucide-react';
 import LocationForm from './components/LocationForm';
 import LocationList from './components/LocationList';
 import CSVImport from './components/CSVImport';
@@ -7,11 +8,10 @@ import AnalyticsDashboard from './components/AnalyticsDashboard';
 import ThemeToggle from './components/ThemeToggle';
 import Sidebar from './components/Sidebar';
 import Auth from './components/Auth';
-import { getLocations, deleteAllLocations } from './services/locationService';
-import { Plus, MapPin, Menu, Upload, FileDown, BarChart } from 'lucide-react';
 import useDarkMode from './hooks/useDarkMode';
 import { supabase } from './lib/supabase';
 import { User } from '@supabase/supabase-js';
+import { getLocations, deleteAllLocations } from './services/locationService';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'list' | 'new' | 'import' | 'export' | 'analytics'>('new');
@@ -19,6 +19,40 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isDark, setIsDark } = useDarkMode();
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Handle keyboard shortcuts for tab navigation
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only process if Alt key is pressed and not in an input field
+      if (e.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) {
+        switch (e.key) {
+          case '1':
+            setActiveTab('new');
+            e.preventDefault();
+            break;
+          case '2':
+            setActiveTab('list');
+            e.preventDefault();
+            break;
+          case '3':
+            setActiveTab('export');
+            e.preventDefault();
+            break;
+          case '4':
+            setActiveTab('import');
+            e.preventDefault();
+            break;
+          case '5':
+            setActiveTab('analytics');
+            e.preventDefault();
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -117,6 +151,7 @@ function App() {
                 className={`flex items-center px-4 py-2 rounded-full transition-colors ${
                   activeTab === 'new' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
+                title="New Location (Alt+1)"
               >
                 <Plus size={18} className="mr-2" />
                 <span>New</span> <span className='hidden ml-1 md:inline'>Location</span>
@@ -127,6 +162,7 @@ function App() {
                 className={`flex items-center px-4 py-2 rounded-full transition-colors ${
                   activeTab === 'list' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
+                title="Saved Locations (Alt+2)"
               >
                 <MapPin size={18} className="mr-2" />
                 <span>Saved</span> <span className='hidden ml-1 lg:inline'> Locations</span>
@@ -138,6 +174,7 @@ function App() {
                 className={`flex items-center px-4 py-2 rounded-full transition-colors ${
                   activeTab === 'export' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
+                title="Export to File (Alt+3)"
               >
                 <FileDown size={18} className="mr-2" />
                 <span>Export</span> <span className='hidden ml-1 lg:inline'> to File</span>
@@ -145,18 +182,21 @@ function App() {
               
               <button
                 onClick={() => setActiveTab('import')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors hidden sm:flex ${
+                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
                   activeTab === 'import' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
+                title="Import to Back-Office (Alt+4)"
               >
                 <Upload size={18} className="mr-2" />
                 <span>Import</span> <span className='hidden ml-1 lg:inline'> to Back-Office</span>
               </button>
+              
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors hidden sm:flex ${
+                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
                   activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
+                title="Analytics (Alt+5)"
               >
                 <BarChart size={18} className="mr-2" />
                 <span>Analytics</span>

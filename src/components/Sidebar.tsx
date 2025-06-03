@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, Trash2, X, LogOut, BarChart, Upload } from 'lucide-react';
+import { Share2, Trash2, X, LogOut, BarChart, Upload, Keyboard } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,44 +10,30 @@ interface SidebarProps {
   onOpenImport: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignOut, onOpenAnalytics, onOpenImport }) => {
-  const handleShare = async () => {
-    try {
-      const position = await getCurrentPosition();
-      const shareText = `Check out my location!\nLatitude: ${position.coords.latitude}\nLongitude: ${position.coords.longitude}\nGoogle Maps: https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
-      
-      if (navigator.share) {
-        await navigator.share({
-          text: shareText,
-        });
-      } else {
-        // Fallback for browsers that don't support the Web Share API
-        const textArea = document.createElement('textarea');
-        textArea.value = shareText;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('Location copied to clipboard!');
-      }
-    } catch (error) {
-      console.log(error);
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  isOpen, 
+  onClose, 
+  onDeleteAll, 
+  onSignOut, 
+  onOpenAnalytics, 
+  onOpenImport 
+}) => {
+  const handleDeleteAll = () => {
+    if (window.confirm('Are you sure you want to delete all locations? This cannot be undone.')) {
+      onDeleteAll();
     }
   };
 
-  const getCurrentPosition = (): Promise<GeolocationPosition> => {
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
-      });
-    });
-  };
-
-  const handleDeleteAll = () => {
-    if (window.confirm('Are you sure you want to delete all your saved locations? This action cannot be undone.')) {
-      onDeleteAll();
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'MCCI GPS',
+        text: 'Check out this GPS location tracking app!',
+        url: window.location.href,
+      })
+      .catch((error) => console.log('Error sharing', error));
+    } else {
+      alert('Web Share API not supported in your browser');
     }
   };
 
@@ -79,6 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignO
           >
             <Upload size={20} className="mr-3" />
             Import to Back-Office
+            <span className="ml-auto text-xs text-gray-400">Alt+4</span>
           </button>
           
           <button
@@ -87,6 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignO
           >
             <BarChart size={20} className="mr-3" />
             Analytics
+            <span className="ml-auto text-xs text-gray-400">Alt+5</span>
           </button>
           
           <button
@@ -96,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignO
             <Trash2 size={20} className="mr-3" />
             Delete All Locations
           </button>
-
+          
           <button
             onClick={onSignOut}
             className="w-full flex items-center px-4 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -104,6 +92,36 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onDeleteAll, onSignO
             <LogOut size={20} className="mr-3" />
             Sign Out
           </button>
+        </div>
+        
+        {/* Keyboard shortcuts section */}
+        <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
+            <Keyboard size={16} className="mr-2" />
+            <span>Keyboard Shortcuts</span>
+          </div>
+          <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1 pl-2">
+            <div className="flex justify-between">
+              <span>New Location</span>
+              <span className="font-mono">Alt+1</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Saved Locations</span>
+              <span className="font-mono">Alt+2</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Export</span>
+              <span className="font-mono">Alt+3</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Import</span>
+              <span className="font-mono">Alt+4</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Analytics</span>
+              <span className="font-mono">Alt+5</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
