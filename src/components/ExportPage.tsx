@@ -338,7 +338,7 @@ const ExportPage: React.FC = () => {
                 ></label>
               </div>
               <label htmlFor="enableGroupFilter" className="text-sm text-gray-600 dark:text-gray-400">
-                Enable group filtering
+                Group filtering
               </label>
             </div>
           </div>
@@ -416,7 +416,7 @@ const ExportPage: React.FC = () => {
             displayFormat="DD/MM/YYYY"
             separator="to"
             maxDate={new Date()}
-            inputClassName="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 text-gray-600 dark:text-white"
+            inputClassName="w-full p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 text-gray-600 dark:text-white"
           />
         </div>
 

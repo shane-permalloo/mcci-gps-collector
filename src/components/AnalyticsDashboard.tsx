@@ -29,7 +29,7 @@ import {
   Search
 } from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, LayersControl, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, LayersControl } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { divIcon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
