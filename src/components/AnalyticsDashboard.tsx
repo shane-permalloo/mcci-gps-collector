@@ -24,9 +24,17 @@ import {
   MapPin,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Map as MapIcon,
+  Search
 } from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+import { divIcon } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
+import 'leaflet-defaulticon-compatibility';
 
 // Register ChartJS components
 ChartJS.register(
@@ -43,6 +51,7 @@ ChartJS.register(
 
 const AnalyticsDashboard: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
+  const [filteredMapLocations, setFilteredMapLocations] = useState<Location[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [updateStats, setUpdateStats] = useState<{ 
@@ -53,6 +62,8 @@ const AnalyticsDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { isDark } = useDarkMode();
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [titleSearchTerm, setTitleSearchTerm] = useState<string>('');
   
   // References to chart instances
   const barChartRef = useRef<ChartJS>(null);
@@ -80,6 +91,43 @@ const AnalyticsDashboard: React.FC = () => {
     loadData();
   }, []);
   
+  useEffect(() => {
+    // Apply filters whenever locations, selectedGroupId, or titleSearchTerm changes
+    applyMapFilters();
+  }, [locations, selectedGroupId, titleSearchTerm]);
+  
+  const applyMapFilters = () => {
+    let filtered = [...locations];
+    
+    // Filter by group
+    if (selectedGroupId) {
+      filtered = filtered.filter(location => location.groupId === selectedGroupId);
+    }
+    
+    // Filter by title search
+    if (titleSearchTerm.trim()) {
+      const searchTermLower = titleSearchTerm.toLowerCase().trim();
+      filtered = filtered.filter(location => 
+        location.title.toLowerCase().includes(searchTermLower)
+      );
+    }
+    
+    setFilteredMapLocations(filtered);
+  };
+  
+  const handleGroupFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedGroupId(e.target.value);
+  };
+  
+  const handleTitleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitleSearchTerm(e.target.value);
+  };
+  
+  const clearFilters = () => {
+    setSelectedGroupId('');
+    setTitleSearchTerm('');
+  };
+  
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -91,6 +139,7 @@ const AnalyticsDashboard: React.FC = () => {
       ]);
       
       setLocations(locationsData);
+      setFilteredMapLocations(locationsData); // Initialize filtered locations with all locations
       setGroups(groupsData);
       setUsers(usersData);
       setUpdateStats(locationUpdateStats);
@@ -667,6 +716,150 @@ const AnalyticsDashboard: React.FC = () => {
 
       </div>
 
+      {/* Location Cluster Map */}
+      <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600 mb-6">
+        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
+          <MapIcon size={20} className="mr-2 text-blue-500" />
+          Location Distribution Map
+        </h3>
+        
+        {/* Map Filtering Controls */}
+        <div className="mb-4 flex flex-wrap gap-3 items-center">
+          <div className="flex-1 min-w-[200px]">
+            <select 
+              value={selectedGroupId}
+              onChange={handleGroupFilterChange}
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+            >
+              <option value="">All Groups</option>
+              {groups.map(group => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex-1 min-w-[200px] relative">
+            <input 
+              type="text" 
+              value={titleSearchTerm}
+              onChange={handleTitleSearchChange}
+              placeholder="Search by title..."
+              className="w-full p-2 pl-8 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+            />
+            <Search size={16} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+          
+          <button 
+            onClick={clearFilters}
+            className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+          >
+            Clear Filters
+          </button>
+          
+          <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+            Showing {filteredMapLocations.length} of {locations.length} locations
+          </div>
+        </div>
+        
+        <div className="h-[500px]">
+          {filteredMapLocations.length > 0 ? (
+            <MapContainer
+              center={[filteredMapLocations[0].latitude, filteredMapLocations[0].longitude]}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+              className="rounded-lg"
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <MarkerClusterGroup
+                chunkedLoading
+                zoomToBoundsOnClick={true}
+                spiderfyOnMaxZoom={true}
+                showCoverageOnHover={true}
+                iconCreateFunction={(cluster) => {
+                  const count = cluster.getChildCount();
+                  let size = 40;
+                  let className = 'bg-blue-500';
+                  
+                  if (count > 50) {
+                    size = 60;
+                    className = 'bg-red-500';
+                  } else if (count > 20) {
+                    size = 50;
+                    className = 'bg-orange-500';
+                  }
+                  
+                  return divIcon({
+                    html: `<div class="flex items-center justify-center ${className} text-white font-bold rounded-full shadow-lg" style="width: ${size}px; height: ${size}px;">${count}</div>`,
+                    className: 'custom-marker-cluster',
+                    iconSize: [size, size]
+                  });
+                }}
+              >
+                {filteredMapLocations.map((location) => {
+                  const group = groups.find(g => g.id === location.groupId) || { name: 'Default', color: '#ccc' };
+                  return (
+                    <Marker
+                      key={location.id}
+                      position={[location.latitude, location.longitude]}
+                      icon={divIcon({
+                        className: 'custom-div-icon',
+                        html: `
+                          <div style="
+                            background-color: ${group.color};
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            border: 2px solid white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                          "></div>
+                        `,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12],
+                      })}
+                    >
+                      <Popup>
+                        <div>
+                          <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-1">{location.title}</h3>
+                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                            <div>{location.latitude.toFixed(7)}, {location.longitude.toFixed(7)}</div>
+                            <div className="mt-1">
+                              Group: <span style={{ color: group.color }}>{group.name}</span>
+                            </div>
+                          </div>
+                          {location.description && (
+                            <p className="text-sm text-gray-700 mt-2">{location.description}</p>
+                          )}
+                          {location.tags && location.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {location.tags.map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+              </MarkerClusterGroup>
+            </MapContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-gray-500 dark:text-gray-400">No locations to display</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
