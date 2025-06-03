@@ -12,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { showAlert } from '../utils/alertUtils';
 
 // Define the DateValueType for the datepicker
 interface DateValueType {
@@ -159,7 +160,7 @@ const ExportPage: React.FC = () => {
       const groups = await getGroups() || [];
       
       if (locations.length === 0) {
-        alert('No locations to export. Save some locations first!');
+        showAlert('Export Error', 'No locations to export. Save some locations first!');
         return;
       }
 
@@ -183,7 +184,7 @@ const ExportPage: React.FC = () => {
       }
 
       if (filteredLocations.length === 0) {
-        alert('No locations found with the selected filters.');
+        showAlert('Export Error', 'No locations found with the selected filters.');
         return;
       }
       
@@ -202,7 +203,7 @@ const ExportPage: React.FC = () => {
       setLastExport(new Date().toLocaleString());
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Export failed. Please try again.');
+      showAlert('Export Error', 'Export failed. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -552,10 +553,3 @@ const ExportPage: React.FC = () => {
 };
 
 export default ExportPage;
-
-
-
-
-
-
-

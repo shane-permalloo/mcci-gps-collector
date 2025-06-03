@@ -3,6 +3,7 @@ import { Group } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { getGroups, saveGroup, deleteGroup } from '../services/locationService';
 import { PlusCircle, Trash2, X, Check } from 'lucide-react';
+import { showAlert } from '../utils/alertUtils';
 
 interface GroupSelectorProps {
   selectedGroupId: string;
@@ -64,7 +65,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
 
   const handleDeleteConfirm = async (groupId: string) => {
     if (groupId === 'default') {
-      alert('Cannot delete the default group');
+      showAlert('Cannot Delete', 'The default group cannot be deleted');
       return;
     }
     

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Share2, Trash2, X, LogOut, BarChart, Upload, Keyboard } from 'lucide-react';
+import { showAlert, showConfirm } from '../utils/alertUtils';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,9 +20,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenImport 
 }) => {
   const handleDeleteAll = () => {
-    if (window.confirm('Are you sure you want to delete all locations? This cannot be undone.')) {
-      onDeleteAll();
-    }
+    showConfirm(
+      'Confirm deletion',
+      'Are you sure you want to delete all locations? This cannot be undone.',
+      () => {
+        onDeleteAll();
+        showAlert('Success', 'All locations have been deleted.');
+      },
+      undefined,
+      'Delete All',
+      'Cancel',
+      true
+    );
   };
 
   const handleShare = () => {
@@ -33,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       })
       .catch((error) => console.log('Error sharing', error));
     } else {
-      alert('Web Share API not supported in your browser');
+      showAlert('Sharing not supported', 'Web Share API is not supported in your browser');
     }
   };
 

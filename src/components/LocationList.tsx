@@ -53,7 +53,7 @@ const LocationList: React.FC = () => {
       await deleteLocation(id);
       // console.log(`Successfully deleted location ${id}`);
       await loadData();
-    } catch (error) {
+    } catch {
       // console.error('Error deleting location:', error);
       alert('Failed to delete location. You can only delete your own locations.');
     } finally {
