@@ -123,6 +123,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
         </div>
+        
+        {/* Powered by MNS section */}
+        <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Powered by <a 
+              href="https://mns.mu/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              MNS
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
