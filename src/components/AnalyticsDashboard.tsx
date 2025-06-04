@@ -26,10 +26,13 @@ import {
   TrendingDown,
   Minus,
   Map as MapIcon,
-  Search
+  Search,
+  Flame,
+  Layers,
+  InfoIcon
 } from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, LayersControl, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { divIcon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -37,6 +40,8 @@ import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import 'leaflet-defaulticon-compatibility';
 import 'leaflet.fullscreen/Control.FullScreen.css';
 import { FullscreenControl } from 'react-leaflet-fullscreen';
+import 'leaflet.heat';
+import L from 'leaflet';
 const { BaseLayer } = LayersControl;
 
 // Register ChartJS components
@@ -51,6 +56,42 @@ ChartJS.register(
   PointElement,
   LineElement
 );
+
+// Create a HeatmapLayer component that uses Leaflet.heat
+const HeatmapLayer = ({ points, intensity = 0.3, radius = 20 }) => {
+  const map = useMap();
+  const heatLayerRef = useRef(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Remove existing heatmap layer if it exists
+    if (heatLayerRef.current) {
+      map.removeLayer(heatLayerRef.current);
+    }
+
+    // Create and add the new heatmap layer
+    const heatLayer = L.heatLayer(points, {
+      radius: radius,
+      blur: 15,
+      maxZoom: 17,
+      max: 1.0,
+      gradient: { 0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red' },
+      intensity: intensity
+    });
+
+    heatLayer.addTo(map);
+    heatLayerRef.current = heatLayer;
+
+    return () => {
+      if (heatLayerRef.current) {
+        map.removeLayer(heatLayerRef.current);
+      }
+    };
+  }, [map, points, radius, intensity]);
+
+  return null;
+};
 
 const AnalyticsDashboard: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -67,12 +108,30 @@ const AnalyticsDashboard: React.FC = () => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [titleSearchTerm, setTitleSearchTerm] = useState<string>('');
+  const [mapView, setMapView] = useState('both'); // Default to showing both
+  const [mapControls, setMapControls] = useState({
+    heatmapIntensity: 0.3,
+    heatmapRadius: 20
+  });
   
   // References to chart instances
   const barChartRef = useRef<ChartJS>(null);
   const pieChartRef = useRef<ChartJS>(null);
   const lineChartRef = useRef<ChartJS>(null);
 
+  // Add these new states
+  const [heatmapIntensity, setHeatmapIntensity] = useState(0.3);
+  const [heatmapRadius, setHeatmapRadius] = useState(20);
+  
+  // Prepare heatmap data from locations
+  const getHeatmapData = () => {
+    return locations.map(location => [
+      location.latitude,
+      location.longitude,
+      1 // Intensity value (could be based on some metric)
+    ]);
+  };
+  
   // Force chart update when theme changes
   useEffect(() => {
     // Increment to trigger re-render
@@ -719,15 +778,61 @@ const AnalyticsDashboard: React.FC = () => {
 
       </div>
 
-      {/* Location Cluster Map */}
+      {/* Combined Map Widget */}
       <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-600 mb-6">
         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center">
           <MapIcon size={20} className="mr-2 text-blue-500" />
           Location Distribution Map
         </h3>
         
-        {/* Map Filtering Controls */}
-        <div className="mb-4 flex flex-wrap gap-3 items-center">
+        {/* Map Controls */}
+        <div className="mb-4 flex flex-wrap gap-4 items-center">
+          {/* View Mode Selector */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setMapView('markers')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                mapView === 'markers' || mapView === 'both' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <div className="flex items-center">
+                <MapPin size={16} className="mr-1.5" />
+                Markers
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setMapView('heatmap')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                mapView === 'heatmap' || mapView === 'both' 
+                  ? 'bg-orange-500 text-white' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <div className="flex items-center">
+                <Flame size={16} className="mr-1.5" />
+                Heatmap
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setMapView('both')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                mapView === 'both' 
+                  ? 'bg-purple-500 text-white' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <div className="flex items-center">
+                <Layers size={16} className="mr-1.5" />
+                Both
+              </div>
+            </button>
+          </div>
+          
+          {/* Filtering Controls */}
           <div className="flex-1 min-w-[200px]">
             <select 
               value={selectedGroupId}
@@ -760,20 +865,65 @@ const AnalyticsDashboard: React.FC = () => {
           >
             Clear Filters
           </button>
-          
-          <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
-            Showing {filteredMapLocations.length} of {locations.length} locations
-          </div>
         </div>
         
-        <div className="h-[500px]">
+        {/* Heatmap Controls - Only show when heatmap is active */}
+        {(mapView === 'heatmap' || mapView === 'both') && (
+          <div className="mb-4 flex flex-wrap gap-4 items-center">
+            <div className="flex items-center space-x-2">
+              <label htmlFor="intensity" className="text-sm text-gray-600 dark:text-gray-400">
+                Intensity:
+              </label>
+              <input
+                type="range"
+                id="intensity"
+                min="0.1"
+                max="1"
+                step="0.1"
+                value={mapControls.heatmapIntensity}
+                onChange={(e) => setMapControls({
+                  ...mapControls,
+                  heatmapIntensity: parseFloat(e.target.value)
+                })}
+                className="w-24"
+              />
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                {mapControls.heatmapIntensity.toFixed(1)}
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <label htmlFor="radius" className="text-sm text-gray-600 dark:text-gray-400">
+                Radius:
+              </label>
+              <input
+                type="range"
+                id="radius"
+                min="10"
+                max="50"
+                step="5"
+                value={mapControls.heatmapRadius}
+                onChange={(e) => setMapControls({
+                  ...mapControls,
+                  heatmapRadius: parseInt(e.target.value)
+                })}
+                className="w-24"
+              />
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                {mapControls.heatmapRadius}px
+              </span>
+            </div>
+          </div>
+        )}
+        
+        <div className="h-[600px]">
           {filteredMapLocations.length > 0 ? (
             <MapContainer
               center={[filteredMapLocations[0].latitude, filteredMapLocations[0].longitude]}
               zoom={13}
               style={{ height: '100%', width: '100%' }}
               className="rounded-lg"
-              zoomControl={false} // Disable default zoom control
+              zoomControl={false}
             >
               <LayersControl position="topright">
                 <BaseLayer checked name="OpenStreetMap">
@@ -789,91 +939,115 @@ const AnalyticsDashboard: React.FC = () => {
                   />
                 </BaseLayer>
               </LayersControl>
-              <ZoomControl position="topright" /> {/* Keep only this zoom control */}
+              
+              <ZoomControl position="topright" />
               <FullscreenControl position="topright" />
-              <MarkerClusterGroup
-                chunkedLoading
-                zoomToBoundsOnClick={true}
-                spiderfyOnMaxZoom={true}
-                showCoverageOnHover={true}
-                iconCreateFunction={(cluster) => {
-                  const count = cluster.getChildCount();
-                  let size = 40;
-                  let className = 'bg-blue-500';
-                  
-                  if (count > 50) {
-                    size = 60;
-                    className = 'bg-red-500';
-                  } else if (count > 20) {
-                    size = 50;
-                    className = 'bg-orange-500';
-                  }
-                  
-                  return divIcon({
-                    html: `<div class="flex items-center justify-center ${className} text-white font-bold rounded-full shadow-lg" style="width: ${size}px; height: ${size}px;">${count}</div>`,
-                    className: 'custom-marker-cluster',
-                    iconSize: [size, size]
-                  });
-                }}
-              >
-                {filteredMapLocations.map((location) => {
-                  const group = groups.find(g => g.id === location.groupId) || { name: 'Default', color: '#ccc' };
-                  return (
-                    <Marker
-                      key={location.id}
-                      position={[location.latitude, location.longitude]}
-                      icon={divIcon({
-                        className: 'custom-div-icon',
-                        html: `
-                          <div style="
-                            background-color: ${group.color};
-                            width: 24px;
-                            height: 24px;
-                            border-radius: 50%;
-                            border: 2px solid white;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                          "></div>
-                        `,
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12],
-                      })}
-                    >
-                      <Popup>
-                        <div>
-                          <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-1">{location.title}</h3>
-                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                            <div>{location.latitude.toFixed(7)}, {location.longitude.toFixed(7)}</div>
-                            <div className="mt-1">
-                              Group: <span style={{ color: group.color }}>{group.name}</span>
+              
+              {/* Heatmap Layer */}
+              {(mapView === 'heatmap' || mapView === 'both') && (
+                <HeatmapLayer 
+                  points={getHeatmapData()} 
+                  intensity={mapControls.heatmapIntensity}
+                  radius={mapControls.heatmapRadius}
+                />
+              )}
+              
+              {/* Marker Cluster Layer */}
+              {(mapView === 'markers' || mapView === 'both') && (
+                <MarkerClusterGroup
+                  chunkedLoading
+                  zoomToBoundsOnClick={true}
+                  spiderfyOnMaxZoom={true}
+                  showCoverageOnHover={true}
+                  iconCreateFunction={(cluster) => {
+                    const count = cluster.getChildCount();
+                    let size = 40;
+                    let className = 'bg-blue-500';
+                    
+                    if (count > 50) {
+                      size = 60;
+                      className = 'bg-red-500';
+                    } else if (count > 20) {
+                      size = 50;
+                      className = 'bg-orange-500';
+                    }
+                    
+                    return divIcon({
+                      html: `<div class="flex items-center justify-center ${className} text-white font-bold rounded-full shadow-lg" style="width: ${size}px; height: ${size}px;">${count}</div>`,
+                      className: 'custom-marker-cluster',
+                      iconSize: [size, size]
+                    });
+                  }}
+                >
+                  {filteredMapLocations.map((location) => {
+                    const group = groups.find(g => g.id === location.groupId) || { name: 'Default', color: '#ccc' };
+                    return (
+                      <Marker
+                        key={location.id}
+                        position={[location.latitude, location.longitude]}
+                        icon={divIcon({
+                          className: 'custom-div-icon',
+                          html: `
+                            <div style="
+                              background-color: ${group.color};
+                              width: 24px;
+                              height: 24px;
+                              border-radius: 50%;
+                              border: 2px solid white;
+                              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                            "></div>
+                          `,
+                          iconSize: [24, 24],
+                          iconAnchor: [12, 12],
+                        })}
+                      >
+                        <Popup>
+                          <div>
+                            <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-1">{location.title}</h3>
+                            <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                              <div>{location.latitude.toFixed(7)}, {location.longitude.toFixed(7)}</div>
+                              <div className="mt-1">
+                                Group: <span style={{ color: group.color }}>{group.name}</span>
+                              </div>
                             </div>
+                            {location.description && (
+                              <p className="text-sm text-gray-700 mt-2">{location.description}</p>
+                            )}
+                            {location.tags && location.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {location.tags.map((tag, index) => (
+                                  <span
+                                    key={index}
+                                    className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          {location.description && (
-                            <p className="text-sm text-gray-700 mt-2">{location.description}</p>
-                          )}
-                          {location.tags && location.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {location.tags.map((tag, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </Popup>
-                    </Marker>
-                  );
-                })}
-              </MarkerClusterGroup>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                </MarkerClusterGroup>
+              )}
             </MapContainer>
           ) : (
             <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-gray-500 dark:text-gray-400">No locations to display</p>
             </div>
           )}
+        </div>
+        
+        <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 flex items-start">
+          <div className="mr-2 mt-0.5 text-blue-500">
+            <InfoIcon size={16} />
+          </div>
+          <p>
+            This map shows the distribution of your saved locations. Toggle between marker view and heatmap view to visualize location density. 
+            Areas with higher concentration of locations appear in red on the heatmap, while areas with fewer locations appear in blue.
+          </p>
         </div>
       </div>
     </div>
