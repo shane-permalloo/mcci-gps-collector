@@ -3,7 +3,8 @@ import { Location, Group } from '../types';
 import { getLocations, getGroups, deleteLocation } from '../services/locationService';
 import LocationCard from './LocationCard';
 import LocationMap from './LocationMap';
-import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ArrowUpDown, ChevronRight, Edit, Trash2, Eye, Info } from 'lucide-react';
+import { supabase } from '../utils/supabaseClient';
 
 const ITEMS_PER_PAGE = 30;
 
@@ -19,7 +20,11 @@ const LocationList: React.FC = () => {
   const [filterGroupId, setFilterGroupId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  
+  const [sortColumn, setSortColumn] = useState<SortColumn>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  type SortColumn = 'title' | 'createdAt' | 'group' | 'coordinates';
+
   useEffect(() => {
     loadData();
   }, []);
@@ -37,13 +42,30 @@ const LocationList: React.FC = () => {
         getLocations(),
         getGroups()
       ]);
-      setLocations(locationsData);
+      
+      // Get the current user ID from your auth system
+      const currentUserId = await getCurrentUserId(); // Implement this function
+      
+      // Set isOwner flag for each location
+      const locationsWithOwnership = locationsData.map(location => ({
+        ...location,
+        isOwner: location.userId === currentUserId
+      }));
+      
+      setLocations(locationsWithOwnership);
       setGroups(groupsData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to get current user ID
+  const getCurrentUserId = async () => {
+    // This is a placeholder - implement based on your auth system
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id || '';
   };
   
   const handleDeleteLocation = async (id: string) => {
@@ -77,21 +99,43 @@ const LocationList: React.FC = () => {
       );
     }
     
-    filtered.sort((a, b) => {
-      if (sortOrder === 'newest') {
-        return b.createdAt - a.createdAt;
-      } else {
-        return a.createdAt - b.createdAt;
-      }
-    });
+    // Apply column-based sorting
+    filtered = sortLocations(filtered);
     
     setFilteredLocations(filtered);
   };
-  
-  const toggleSortOrder = () => {
-    setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest');
+
+  const sortLocations = (locations: Location[]) => {
+    return [...locations].sort((a, b) => {
+      const direction = sortDirection === 'asc' ? 1 : -1;
+      
+      switch (sortColumn) {
+        case 'title':
+          return direction * a.title.localeCompare(b.title);
+        case 'createdAt':
+          return direction * (a.createdAt - b.createdAt);
+        case 'group':
+          const groupA = getGroupById(a.groupId)?.name || 'Default';
+          const groupB = getGroupById(b.groupId)?.name || 'Default';
+          return direction * groupA.localeCompare(groupB);
+        case 'coordinates':
+          // Sort by latitude as an example
+          return direction * (a.latitude - b.latitude);
+        default:
+          return 0;
+      }
+    });
   };
-  
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
   const getGroupById = (id: string): Group => {
     return groups.find(group => group.id === id) || { id: 'unknown', name: 'Unknown', color: '#ccc' };
   };
@@ -154,7 +198,216 @@ const LocationList: React.FC = () => {
       </div>
     </div>
   );
-  
+
+  const CompactListView = () => {
+    const [expandedRow, setExpandedRow] = useState<string | null>(null);
+    
+    const toggleRowExpansion = (id: string) => {
+      setExpandedRow(expandedRow === id ? null : id);
+    };
+    
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800">
+            <tr>
+              <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-8"></th>
+              <th 
+                scope="col" 
+                className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                onClick={() => handleSort('title')}
+              >
+                <div className="flex items-center">
+                  Title
+                  <ArrowUpDown size={14} className="ml-1" />
+                </div>
+              </th>
+              <th 
+                scope="col" 
+                className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hidden sm:table-cell"
+                onClick={() => handleSort('coordinates')}
+              >
+                <div className="flex items-center">
+                  Coordinates
+                  <ArrowUpDown size={14} className="ml-1" />
+                </div>
+              </th>
+              <th 
+                scope="col" 
+                className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                onClick={() => handleSort('group')}
+              >
+                <div className="flex items-center">
+                  Group
+                  <ArrowUpDown size={14} className="ml-1" />
+                </div>
+              </th>
+              <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                Tags
+              </th>
+              <th 
+                scope="col" 
+                className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hidden sm:table-cell"
+                onClick={() => handleSort('createdAt')}
+              >
+                <div className="flex items-center">
+                  Date
+                  <ArrowUpDown size={14} className="ml-1" />
+                </div>
+              </th>
+              <th scope="col" className="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {paginatedLocations.map((location) => {
+              const group = getGroupById(location.groupId);
+              const isExpanded = expandedRow === location.id;
+              
+              return (
+                <React.Fragment key={location.id}>
+                  <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${isExpanded ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                    <td className="px-3 py-2">
+                      <button 
+                        onClick={() => toggleRowExpansion(location.id)}
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      >
+                        <ChevronRight size={16} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                      </button>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
+                        {location.title}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap hidden sm:table-cell">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{ backgroundColor: group?.color || '#888888' }}
+                        ></span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {group?.name || 'Default'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap hidden md:table-cell">
+                      <div className="flex flex-wrap gap-1">
+                        {location.tags.slice(0, 2).map((tag, idx) => (
+                          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                            {tag}
+                          </span>
+                        ))}
+                        {location.tags.length > 2 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                            +{location.tags.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                      {new Date(location.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
+                      {location.isOwner ? (
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => handleViewLocation(location.id)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="View on map"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleEditLocation(location.id)}
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteLocation(location.id)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end text-amber-600 dark:text-amber-400 text-xs">
+                          <Info size={14} className="mr-1" />
+                          <span>Shared location</span>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                  {isExpanded && (
+                    <tr className="bg-gray-50 dark:bg-gray-700/50">
+                      <td colSpan={7} className="px-3 py-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Details</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                              {location.description || 'No description provided'}
+                            </p>
+                            {location.tags.length > 0 && (
+                              <div className="mt-2">
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">All Tags</h4>
+                                <div className="flex flex-wrap gap-1">
+                                  {location.tags.map((tag, idx) => (
+                                    <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Coordinates</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Latitude: {location.latitude.toFixed(7)}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Longitude: {location.longitude.toFixed(7)}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              Added: {new Date(location.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const handleViewLocation = (id: string) => {
+    // Implement view location logic here
+    console.log(`View location with ID: ${id}`);
+  };
+
+  const handleEditLocation = (id: string) => {
+    // Implement edit location logic here
+    console.log(`Edit location with ID: ${id}`);
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest');
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -247,6 +500,8 @@ const LocationList: React.FC = () => {
           locations={filteredLocations} 
           groups={groups}
         />
+      ) : viewMode === 'list' ? (
+        <CompactListView />
       ) : (
         <>
           <div className={`
