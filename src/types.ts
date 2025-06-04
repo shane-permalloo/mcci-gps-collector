@@ -4,10 +4,11 @@ export interface Location {
   latitude: number;
   longitude: number;
   description?: string;
-  tags: string[];
+  tags?: string[];
   groupId: string;
   createdAt: number;
-  userId: string;
+  directusId?: string;
+  user_id?: string;
   isOwner?: boolean;
 }
 

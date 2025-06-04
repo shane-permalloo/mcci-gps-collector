@@ -3,8 +3,8 @@ import { Location, Group } from '../types';
 import { getLocations, getGroups, deleteLocation } from '../services/locationService';
 import LocationCard from './LocationCard';
 import LocationMap from './LocationMap';
-import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ArrowUpDown, ChevronRight, Edit, Trash2, Eye, Info } from 'lucide-react';
-import { supabase } from '../utils/supabaseClient';
+import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ArrowUpDown, ChevronRight } from 'lucide-react';
+import { supabase } from "../lib/supabase";
 
 const ITEMS_PER_PAGE = 30;
 
@@ -44,13 +44,17 @@ const LocationList: React.FC = () => {
       ]);
       
       // Get the current user ID from your auth system
-      const currentUserId = await getCurrentUserId(); // Implement this function
+      const currentUserId = await getCurrentUserId();
       
       // Set isOwner flag for each location
-      const locationsWithOwnership = locationsData.map(location => ({
-        ...location,
-        isOwner: location.userId === currentUserId
-      }));
+      const locationsWithOwnership = locationsData.map(location => {
+        const isOwner = location.user_id === currentUserId;
+        console.log(`Location ${location.id}: user_id=${location.user_id}, currentUserId=${currentUserId}, isOwner=${isOwner}`);
+        return {
+          ...location,
+          isOwner
+        };
+      });
       
       setLocations(locationsWithOwnership);
       setGroups(groupsData);
@@ -63,7 +67,6 @@ const LocationList: React.FC = () => {
 
   // Helper function to get current user ID
   const getCurrentUserId = async () => {
-    // This is a placeholder - implement based on your auth system
     const { data: { user } } = await supabase.auth.getUser();
     return user?.id || '';
   };
@@ -115,9 +118,11 @@ const LocationList: React.FC = () => {
         case 'createdAt':
           return direction * (a.createdAt - b.createdAt);
         case 'group':
-          const groupA = getGroupById(a.groupId)?.name || 'Default';
-          const groupB = getGroupById(b.groupId)?.name || 'Default';
-          return direction * groupA.localeCompare(groupB);
+          {
+            const groupA = getGroupById(a.groupId)?.name || 'Default';
+            const groupB = getGroupById(b.groupId)?.name || 'Default';
+            return direction * groupA.localeCompare(groupB);
+          }
         case 'coordinates':
           // Sort by latitude as an example
           return direction * (a.latitude - b.latitude);
@@ -255,9 +260,6 @@ const LocationList: React.FC = () => {
                   <ArrowUpDown size={14} className="ml-1" />
                 </div>
               </th>
-              <th scope="col" className="px-3 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Actions
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -314,38 +316,6 @@ const LocationList: React.FC = () => {
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                       {new Date(location.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
-                      {location.isOwner ? (
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => handleViewLocation(location.id)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                            title="View on map"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleEditLocation(location.id)}
-                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteLocation(location.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-end text-amber-600 dark:text-amber-400 text-xs">
-                          <Info size={14} className="mr-1" />
-                          <span>Shared location</span>
-                        </div>
-                      )}
-                    </td>
                   </tr>
                   {isExpanded && (
                     <tr className="bg-gray-50 dark:bg-gray-700/50">
@@ -393,17 +363,7 @@ const LocationList: React.FC = () => {
       </div>
     );
   };
-
-  const handleViewLocation = (id: string) => {
-    // Implement view location logic here
-    console.log(`View location with ID: ${id}`);
-  };
-
-  const handleEditLocation = (id: string) => {
-    // Implement edit location logic here
-    console.log(`Edit location with ID: ${id}`);
-  };
-
+  
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest');
   };

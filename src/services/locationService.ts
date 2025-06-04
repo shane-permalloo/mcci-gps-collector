@@ -33,8 +33,8 @@ export const getLocations = async (): Promise<Location[]> => {
         tags: item.tags || [],
         groupId: item.group_id || "default",
         createdAt: new Date(item.created_at).getTime(),
-        // Add isOwner property by comparing the user_id with the current user's ID
-        isOwner: item.user_id === user.id
+        user_id: item.user_id, // Make sure user_id is included in the returned object
+        isOwner: item.user_id === user.id // Set isOwner directly here
       };
 
       // Only add directusId if it exists in the database record
