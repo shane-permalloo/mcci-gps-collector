@@ -22,6 +22,7 @@ const LocationList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<SortColumn>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
 
   type SortColumn = 'title' | 'createdAt' | 'group' | 'coordinates';
 
@@ -145,9 +146,9 @@ const LocationList: React.FC = () => {
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredLocations.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedLocations = filteredLocations.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedLocations = filteredLocations.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -155,41 +156,72 @@ const LocationList: React.FC = () => {
   };
 
   const Pagination = () => {
-    if (totalPages <= 1) return null;
+    if (filteredLocations.length === 0) return null;
 
     return (
-      <div className="flex items-center justify-center mt-6 space-x-2">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        
-        <div className="flex items-center space-x-1">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => handlePageChange(page)}
-              className={`px-3 py-1 rounded-md ${
-                currentPage === page
-                  ? 'bg-gray-600 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+        <div className="flex items-center space-x-2 order-2 sm:order-1">
+          <label htmlFor="itemsPerPage" className="text-sm text-gray-600 dark:text-gray-400">
+            Show:
+          </label>
+          <select
+            id="itemsPerPage"
+            value={itemsPerPage}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              // Special case for "All" option
+              if (value === 0) {
+                // Set to a very large number to show all items
+                setItemsPerPage(filteredLocations.length || 1000);
+              } else {
+                setItemsPerPage(value);
+              }
+              setCurrentPage(1); // Reset to first page when changing items per page
+            }}
+            className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          >
+            <option value={30}>30</option>
+            <option value={90}>90</option>
+            <option value={150}>150</option>
+            <option value={0}>All</option>
+          </select>
         </div>
 
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronRight size={20} />
-        </button>
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-2 order-1 sm:order-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 rounded-md ${
+                    currentPage === page
+                      ? 'bg-gray-600 text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -465,7 +497,10 @@ const LocationList: React.FC = () => {
           groups={groups}
         />
       ) : viewMode === 'list' ? (
-        <CompactListView />
+        <>
+          <CompactListView />
+          <Pagination />
+        </>
       ) : (
         <>
           <div className={`
@@ -490,8 +525,8 @@ const LocationList: React.FC = () => {
       
       <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
         {filteredLocations.length} location{filteredLocations.length !== 1 ? 's' : ''} {filterGroupId || searchTerm ? 'found' : 'saved'}
-        {filteredLocations.length > ITEMS_PER_PAGE && !viewMode.includes('map') && (
-          <span> (Showing {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredLocations.length)})</span>
+        {filteredLocations.length > itemsPerPage && !viewMode.includes('map') && (
+          <span> (Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredLocations.length)})</span>
         )}
       </div>
     </div>
