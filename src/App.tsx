@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, MapPin, FileDown, Upload, BarChart, Menu } from 'lucide-react';
 import LocationForm from './components/LocationForm';
 import LocationList from './components/LocationList';
@@ -19,6 +19,9 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isDark, setIsDark } = useDarkMode();
   const [user, setUser] = useState<User | null>(null);
+  // Add this state to track scroll position
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const tabContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Handle keyboard shortcuts for tab navigation
@@ -111,6 +114,55 @@ function App() {
     setIsSidebarOpen(false);
   };
 
+  // Add this useEffect to ensure the active tab is visible when it changes
+  useEffect(() => {
+    // Only run on desktop
+    if (window.innerWidth >= 768) {
+      // Find the active button
+      const activeButton = document.querySelector(`button[title*="${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}"]`);
+      
+      if (activeButton) {
+        // Scroll the button into view with smooth behavior
+        activeButton.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+    }
+  }, [activeTab]);
+
+  // Add this useEffect to check if scrolling is needed
+  useEffect(() => {
+    const checkScrollWidth = () => {
+      if (tabContainerRef.current) {
+        const { scrollWidth, clientWidth } = tabContainerRef.current;
+        setShowScrollIndicator(scrollWidth > clientWidth);
+      }
+    };
+
+    // Check initially
+    checkScrollWidth();
+
+    // Check on window resize
+    window.addEventListener('resize', checkScrollWidth);
+    return () => window.removeEventListener('resize', checkScrollWidth);
+  }, []);
+
+  // Add this function to handle scroll events
+  const handleScroll = () => {
+    if (tabContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tabContainerRef.current;
+      
+      // If we're near the end, hide the indicator
+      if (scrollLeft + clientWidth >= scrollWidth - 20) {
+        setShowScrollIndicator(false);
+      } else {
+        setShowScrollIndicator(true);
+      }
+    }
+  };
+
   if (!user) {
     return <Auth />;
   }
@@ -141,59 +193,63 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-center mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-full justify-center space-x-2 shadow-md p-1 inline-flex transition-colors" id="tab-buttons">
-            <div className="flex flex-wrap gap-1 md:gap-2 justify-center md:justify-start">
+      <main className="container mx-auto px-4 py-6 mb-14 md:mb-0">
+        {/* Top navigation - hidden on mobile */}
+        <div className="hidden md:flex justify-center mb-6 relative">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full justify-center shadow-md p-1 inline-flex transition-colors" id="tab-buttons">
+            <div 
+              ref={tabContainerRef}
+              onScroll={handleScroll}
+              className="flex flex-nowrap overflow-x-auto gap-1 md:gap-2 justify-start px-1 snap-x snap-mandatory scroll-smooth"
+            >
               
               <button
                 onClick={() => setActiveTab('new')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                className={`flex-shrink-0 flex items-center px-4 py-2 rounded-full transition-colors snap-center ${
                   activeTab === 'new' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 title="New Location (Alt+1)"
               >
                 <Plus size={18} className="mr-2" />
-                <span>New</span> <span className='hidden ml-1 md:inline'>Location</span>
+                <span>New</span> <span className='ml-1'>Location</span>
               </button>
               
               <button
                 onClick={() => setActiveTab('list')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                className={`flex-shrink-0 flex items-center px-4 py-2 rounded-full transition-colors snap-center ${
                   activeTab === 'list' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 title="Saved Locations (Alt+2)"
               >
                 <MapPin size={18} className="mr-2" />
-                <span>Saved</span> <span className='hidden ml-1 lg:inline'> Locations</span>
+                <span>Saved</span> <span className='ml-1'> Locations</span>
               </button>
-              
               
               <button
                 onClick={() => setActiveTab('export')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                className={`flex-shrink-0 flex items-center px-4 py-2 rounded-full transition-colors snap-center ${
                   activeTab === 'export' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 title="Export to File (Alt+3)"
               >
                 <FileDown size={18} className="mr-2" />
-                <span>Export</span> <span className='hidden ml-1 lg:inline'> to File</span>
+                <span>Export</span> <span className='ml-1'> to File</span>
               </button>
               
               <button
                 onClick={() => setActiveTab('import')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                className={`flex-shrink-0 flex items-center px-4 py-2 rounded-full transition-colors snap-center ${
                   activeTab === 'import' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 title="Import to Back-Office (Alt+4)"
               >
                 <Upload size={18} className="mr-2" />
-                <span>Import</span> <span className='hidden ml-1 lg:inline'> to Back-Office</span>
+                <span>Import</span> <span className='ml-1'> to Back-Office</span>
               </button>
               
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`flex items-center px-4 py-2 rounded-full transition-colors ${
+                className={`flex-shrink-0 flex items-center px-4 py-2 rounded-full transition-colors snap-center ${
                   activeTab === 'analytics' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 title="Analytics (Alt+5)"
@@ -201,9 +257,24 @@ function App() {
                 <BarChart size={18} className="mr-2" />
                 <span>Analytics</span>
               </button>
-              
             </div>
           </div>
+          
+          {/* Subtle gradient indicator for desktop */}
+          {showScrollIndicator && (
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-gray-800 to-transparent pointer-events-none"></div>
+          )}
+        </div>
+
+        {/* Mobile current tab indicator */}
+        <div className="md:hidden mb-4">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+            {activeTab === 'new' ? 'New Location' : 
+             activeTab === 'list' ? 'Saved Locations' : 
+             activeTab === 'export' ? 'Export to File' : 
+             activeTab === 'import' ? 'Import to Back-Office' : 
+             'Analytics'}
+          </h2>
         </div>
 
         <div className="max-w-8xl mx-auto" style={{ minHeight: '70vh' }}>
@@ -222,7 +293,7 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-800 dark:bg-gray-950 text-gray-300 py-4 sm:py-6 mt-auto transition-colors">
+      <footer className="bg-gray-800 dark:bg-gray-950 text-gray-300 py-4 sm:py-6 mt-auto transition-colors mb-16 hidden md:flex md:mb-0">
         <div className="container mx-auto px-4 text-center">
           <p>MCCI GPS Collector &copy; {new Date().getFullYear()}</p>
           <div className="flex justify-center items-center gap-4 mt-2">
@@ -250,6 +321,61 @@ function App() {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-30">
+        <div className="flex justify-between items-center px-2 py-3">
+          <button
+            onClick={() => setActiveTab('new')}
+            className={`flex flex-col items-center justify-center flex-1 ${
+              activeTab === 'new' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            <Plus size={20} />
+            <span className="text-xs mt-1">New</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`flex flex-col items-center justify-center flex-1 ${
+              activeTab === 'list' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            <MapPin size={20} />
+            <span className="text-xs mt-1">Saved</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('export')}
+            className={`flex flex-col items-center justify-center flex-1 ${
+              activeTab === 'export' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            <FileDown size={20} />
+            <span className="text-xs mt-1">Export</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('import')}
+            className={`flex flex-col items-center justify-center flex-1 ${
+              activeTab === 'import' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            <Upload size={20} />
+            <span className="text-xs mt-1">Import</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`flex flex-col items-center justify-center flex-1 ${
+              activeTab === 'analytics' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            <BarChart size={20} />
+            <span className="text-xs mt-1">Analytics</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -304,13 +304,14 @@ interface ImportedLocation {
   title: string;
   mall: string;
   region: string;
+  location_updated: boolean | null;
 }
 
 // Get imported locations with IDs
 export const getImportedLocations = async (): Promise<ImportedLocation[]> => {
   try {
     // Use the DIRECTUS_CONFIG to fetch from Directus API
-    const response = await fetch(`${DIRECTUS_CONFIG.baseUrl}/items/Shops?fields=id,shop_name,shop_malls.Malls_id.mall_name,shop_region.region_name`, {
+    const response = await fetch(`${DIRECTUS_CONFIG.baseUrl}/items/Shops?fields=id,shop_name,shop_malls.Malls_id.mall_name,shop_region.region_name,location_updated`, {
       headers: {
         'Authorization': `Bearer ${DIRECTUS_CONFIG.token}`
       }
@@ -325,25 +326,29 @@ export const getImportedLocations = async (): Promise<ImportedLocation[]> => {
     const shops = data.data || [];
 
     // Map Directus response to ImportedLocation format
-    return shops.map((shop) => {
-      // Handle multiple mall names by taking the first one if it exists
-      let mallName = '';
-      if (shop.shop_malls && Array.isArray(shop.shop_malls)) {
-        // If shop_malls is an array, take the first mall's name
-        const firstMall = shop.shop_malls[0]?.Malls_id?.mall_name;
-        if (firstMall) mallName = firstMall;
-      } else if (shop.shop_malls?.Malls_id?.mall_name) {
-        // If shop_malls is a single object
-        mallName = shop.shop_malls.Malls_id.mall_name;
-      }
+    // Filter out shops where location_updated is true
+    return shops
+      .filter((shop) => shop.location_updated !== true)
+      .map((shop) => {
+        // Handle multiple mall names by taking the first one if it exists
+        let mallName = '';
+        if (shop.shop_malls && Array.isArray(shop.shop_malls)) {
+          // If shop_malls is an array, take the first mall's name
+          const firstMall = shop.shop_malls[0]?.Malls_id?.mall_name;
+          if (firstMall) mallName = firstMall;
+        } else if (shop.shop_malls?.Malls_id?.mall_name) {
+          // If shop_malls is a single object
+          mallName = shop.shop_malls.Malls_id.mall_name;
+        }
 
-      return {
-        id: shop.id,
-        title: shop.shop_name,
-        mall: mallName,
-        region: shop.shop_region?.region_name || ''
-      };
-    });
+        return {
+          id: shop.id,
+          title: shop.shop_name,
+          mall: mallName,
+          region: shop.shop_region?.region_name || '',
+          location_updated: shop.location_updated
+        };
+      });
   } catch (error) {
     console.error("Failed to fetch shops from Directus:", error);
     return [];

@@ -523,7 +523,7 @@ const LocationList: React.FC = () => {
         </>
       )}
       
-      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center md:text-left">
         {filteredLocations.length} location{filteredLocations.length !== 1 ? 's' : ''} {filterGroupId || searchTerm ? 'found' : 'saved'}
         {filteredLocations.length > itemsPerPage && !viewMode.includes('map') && (
           <span> (Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredLocations.length)})</span>

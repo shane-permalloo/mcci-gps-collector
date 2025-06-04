@@ -7,6 +7,7 @@ interface ImportedLocation {
   title: string;
   mall?: string;
   region?: string;
+  location_updated?: boolean;
 }
 
 interface TitleSelectorProps {
@@ -52,6 +53,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
   const loadImportedLocations = async () => {
     try {
       const locations = await getImportedLocations();
+      // Locations are already filtered in the service
       setImportedLocations(locations);
     } catch (error) {
       console.error('Error loading imported locations:', error);
