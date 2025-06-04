@@ -33,7 +33,7 @@ const LocationList: React.FC = () => {
     filterAndSortLocations();
     // Reset to first page when filters change
     setCurrentPage(1);
-  }, [locations, filterGroupId, sortOrder, searchTerm]);
+  }, [locations, filterGroupId, searchTerm, sortColumn, sortDirection]);
   
   const loadData = async () => {
     setIsLoading(true);
@@ -49,7 +49,6 @@ const LocationList: React.FC = () => {
       // Set isOwner flag for each location
       const locationsWithOwnership = locationsData.map(location => {
         const isOwner = location.user_id === currentUserId;
-        console.log(`Location ${location.id}: user_id=${location.user_id}, currentUserId=${currentUserId}, isOwner=${isOwner}`);
         return {
           ...location,
           isOwner
@@ -363,9 +362,14 @@ const LocationList: React.FC = () => {
       </div>
     );
   };
-  
+
   const toggleSortOrder = () => {
-    setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest');
+    // Toggle between ascending and descending for the createdAt column
+    setSortColumn('createdAt');
+    setSortDirection(sortDirection === 'desc' ? 'asc' : 'desc');
+    
+    // Keep the sortOrder state in sync for UI display purposes
+    setSortOrder(sortDirection === 'desc' ? 'oldest' : 'newest');
   };
 
   return (
@@ -391,7 +395,7 @@ const LocationList: React.FC = () => {
                 ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' 
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
-            title="List view"
+            title="Table view"
           >
             <List size={20} />
           </button>

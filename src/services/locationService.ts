@@ -78,7 +78,7 @@ export const saveLocation = async (location: Location): Promise<void> => {
       locationData['directus_id'] = location.directusId;
     }
 
-    console.log("Saving location data:", JSON.stringify(locationData, null, 2));
+    // console.log("Saving location data:", JSON.stringify(locationData, null, 2));
 
     // Save to Supabase
     const { error } = await supabase
