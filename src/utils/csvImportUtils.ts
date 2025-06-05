@@ -30,13 +30,13 @@ export interface BatchUpdateResult {
 
 export interface DirectusConfig {
   baseUrl: string;
-  token: string; // Hard-coded secret key token
+  token: string;
 }
 
 // Hard-coded Directus configuration - using proxy to avoid CORS issues
 export const DIRECTUS_CONFIG: DirectusConfig = {
   baseUrl: '/api/directus', // Proxy URL to avoid CORS issues
-  token: 'UThix7ozIrwxPwNtPMKZ9EuGy5IqHQLM' // Replace with your actual secret token
+  token: import.meta.env.VITE_DIRECTUS_TOKEN
 };
 
 /**
@@ -129,7 +129,7 @@ export const convertCSVToDirectusRecords = (csvRows: CSVRow[]): DirectusShopReco
         } else {
           errors.push('Coordinates must be an array of [longitude, latitude]');
         }
-      } catch (error) {
+      } catch {
         errors.push('Invalid coordinates format');
       }
     } else {

@@ -54,7 +54,7 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
     try {
       const locations = await getImportedLocations();
       // Locations are already filtered in the service
-      setImportedLocations(locations);
+      setImportedLocations(locations as ImportedLocation[]);
     } catch (error) {
       console.error('Error loading imported locations:', error);
     } finally {
@@ -75,15 +75,12 @@ const TitleSelector: React.FC<TitleSelectorProps> = ({ onTitleSelect, value }) =
   };
 
   const handleTitleSelect = (title: string, id?: string) => {
-    console.log(`Selected title: ${title}, ID: ${id || 'none'}`);
     onTitleSelect(title, id);
     setSearchTerm(title);
     setIsOpen(false);
   };
 
   const handleAddNew = () => {
-    console.log(`Adding new title: ${searchTerm.trim()}`);
-    // Add the current search term as a new title
     onTitleSelect(searchTerm.trim());
     setIsOpen(false);
   };

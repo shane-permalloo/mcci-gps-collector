@@ -16,7 +16,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(location.title);
   const [editedDescription, setEditedDescription] = useState(location.description);
-  const [editedTags, setEditedTags] = useState(location.tags.join(', '));
+  const [editedTags, setEditedTags] = useState((location.tags ?? []).join(', '));
   const [editedGroupId, setEditedGroupId] = useState(location.groupId);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [titleError, setTitleError] = useState(false);
@@ -38,7 +38,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
     const updatedLocation: Location = {
       ...location,
       title: editedTitle.trim(),
-      description: editedDescription.trim(),
+      description: editedDescription?.trim() ?? '',
       tags: editedTags.split(',').map(tag => tag.trim()).filter(Boolean),
       groupId: editedGroupId,
     };
@@ -52,7 +52,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   const handleCancel = () => {
     setEditedTitle(location.title);
     setEditedDescription(location.description);
-    setEditedTags(location.tags.join(', '));
+    setEditedTags((location.tags ?? []).join(', '));
     setEditedGroupId(location.groupId);
     setIsEditing(false);
     setTitleError(false);
@@ -149,7 +149,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
           ) : (
         <div className="flex items-start">
             <div className="flex flex-wrap gap-1">
-              {location.tags.map((tag, index) => (
+              {(location.tags ?? []).map((tag, index) => (
                 <span
                   key={index}
                   className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 text-xs px-2 py-1 rounded"

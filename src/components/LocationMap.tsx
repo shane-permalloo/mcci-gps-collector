@@ -98,9 +98,9 @@ const LocationMap: React.FC<LocationMapProps> = ({ locations, groups, onLocation
                     {location.description && (
                       <p className="text-sm text-gray-700 mt-2">{location.description}</p>
                     )}
-                    {location.tags.length > 0 && (
+                    {(location.tags ?? []).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {location.tags.map((tag, index) => (
+                        {(location.tags ?? []).map((tag, index) => (
                           <span
                             key={index}
                             className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded"

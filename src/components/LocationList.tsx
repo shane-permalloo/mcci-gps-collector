@@ -332,14 +332,14 @@ const LocationList: React.FC = () => {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap hidden md:table-cell">
                       <div className="flex flex-wrap gap-1">
-                        {location.tags.slice(0, 2).map((tag, idx) => (
+                        {(location.tags ?? []).slice(0, 2).map((tag, idx) => (
                           <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                             {tag}
                           </span>
                         ))}
-                        {location.tags.length > 2 && (
+                        {(location.tags ?? []).length > 2 && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                            +{location.tags.length - 2}
+                            +{(location.tags ?? []).length - 2}
                           </span>
                         )}
                       </div>
@@ -357,11 +357,11 @@ const LocationList: React.FC = () => {
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                               {location.description || 'No description provided'}
                             </p>
-                            {location.tags.length > 0 && (
+                            {(location.tags ?? []).length > 0 && (
                               <div className="mt-2">
                                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">All Tags</h4>
                                 <div className="flex flex-wrap gap-1">
-                                  {location.tags.map((tag, idx) => (
+                                  {(location.tags ?? []).map((tag, idx) => (
                                     <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                       {tag}
                                     </span>
