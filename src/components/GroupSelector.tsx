@@ -2,8 +2,63 @@ import React, { useState, useEffect } from 'react';
 import { Group } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { getGroups, saveGroup, deleteGroup } from '../services/locationService';
-import { PlusCircle, Trash2, X, Check } from 'lucide-react';
+import { PlusCircle, Trash2, X, Check, Info } from 'lucide-react';
 import { showAlert, showHtmlConfirm } from '../utils/alertUtils.tsx';
+
+// Expanded set of colors that work well in both light and dark modes
+const RECOMMENDED_COLORS = [
+  // Blues
+  '#3B82F6', // Blue
+  '#60A5FA', // Light Blue
+  '#2563EB', // Royal Blue
+  '#1D4ED8', // Dark Blue
+  '#0EA5E9', // Sky Blue
+  '#0284C7', // Sky Blue 600
+  '#0369A1', // Sky Blue 700
+  '#075985', // Sky Blue 800
+  
+  // Greens
+  '#10B981', // Green
+  '#34D399', // Light Green
+  '#059669', // Emerald
+  '#16A34A', // Forest Green
+  '#14B8A6', // Teal
+  '#0D9488', // Teal 600
+  '#0F766E', // Teal 700
+  '#115E59', // Teal 800
+  
+  // Warm Colors
+  '#F59E0B', // Amber
+  '#F97316', // Orange
+  '#FB923C', // Light Orange
+  '#EA580C', // Dark Orange
+  '#DC2626', // Red
+  '#B91C1C', // Red 700
+  '#991B1B', // Red 800
+  '#7F1D1D', // Red 900
+  
+  // Purples/Pinks
+  '#8B5CF6', // Purple
+  '#A855F7', // Violet
+  '#6366F1', // Indigo
+  '#4F46E5', // Indigo 600
+  '#4338CA', // Indigo 700
+  '#3730A3', // Indigo 800
+  '#EC4899', // Pink
+  '#DB2777', // Pink 600
+  
+  // Other Colors
+  '#06B6D4', // Cyan
+  '#0891B2', // Dark Cyan
+  '#84CC16', // Lime
+  '#65A30D', // Lime 600
+  '#4D7C0F', // Lime 700
+  '#CA8A04', // Yellow
+  '#A16207', // Yellow 700
+  '#BE123C', // Rose
+  '#9F1239', // Rose 700
+  '#881337', // Rose 800
+];
 
 interface GroupSelectorProps {
   selectedGroupId: string;
@@ -19,6 +74,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showColorPalette, setShowColorPalette] = useState(false);
 
   useEffect(() => {
     loadGroups();
@@ -83,8 +139,22 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
           setShowDeleteConfirm(null);
         } catch (error) {
           console.error('Error deleting group:', error);
+          
+          // Check if the error is related to foreign key constraint
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage.includes('foreign key constraint') || 
+              errorMessage.includes('violates foreign key') || 
+              errorMessage.includes('referenced by')) {
+            showAlert(
+              'Cannot Delete Group', 
+              'This group has locations associated with it. Please delete or move these locations to another group first.'
+            );
+          } else {
+            showAlert('Error', 'Failed to delete the group. Some locations are already in this group. Please move them to another group first or delete these associated locations first.');
+          }
         } finally {
           setIsDeleting(false);
+          setShowDeleteConfirm(null);
         }
       },
       () => setShowDeleteConfirm(null),
@@ -102,6 +172,21 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
       </div>
     </div>
   );
+
+  // Add this function to check color contrast
+  const getTextColorForBackground = (bgColor: string) => {
+    // Convert hex to RGB
+    const hex = bgColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return white for dark backgrounds, black for light backgrounds
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
+  };
 
   return (
     <div className="mb-6">
@@ -132,16 +217,49 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
             />
           </div>
           <div className="mb-3">
-            <label htmlFor="groupColor" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Group Color
             </label>
-            <input
-              type="color"
-              id="groupColor"
-              value={newGroupColor}
-              onChange={(e) => setNewGroupColor(e.target.value)}
-              className="w-full h-10 cursor-pointer rounded-md"
-            />
+            
+            <div className="flex items-center mb-2">
+              <div 
+                className="w-10 h-10 rounded-md mr-3 border border-gray-300 dark:border-gray-600"
+                style={{ backgroundColor: newGroupColor }}
+              ></div>
+              
+              <div className="flex-1">
+                <div 
+                  className="px-3 py-2 rounded-md text-center text-sm font-medium"
+                  style={{ 
+                    backgroundColor: newGroupColor,
+                    color: getTextColorForBackground(newGroupColor)
+                  }}
+                >
+                  Preview Text
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-2 p-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+              <div className="flex items-center mb-2">
+                <Info size={14} className="text-gray-500 dark:text-gray-400 mr-2" />
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Select a color for your group
+                </span>
+              </div>
+              <div className="grid grid-cols-8 md:grid-cols-12 gap-2">
+                {RECOMMENDED_COLORS.map(color => (
+                  <div
+                    key={color}
+                    className={`w-8 h-8 rounded-md cursor-pointer border hover:scale-110 transition-transform ${
+                      newGroupColor === color ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800' : 'border-gray-200 dark:border-gray-700'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setNewGroupColor(color)}
+                  ></div>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="flex justify-end space-x-2">
             <button
@@ -229,7 +347,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
                         }}
                         title="Delete group"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={15} />
                       </button>
                     )
                   )}

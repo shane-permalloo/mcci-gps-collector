@@ -115,3 +115,81 @@ export const exportDirectusLocationsToCSV = (locations: Location[], groups: Grou
   downloadCSV(csvContent, filename);
 };
 
+/**
+ * Generates a SQL migration script for exporting locations and groups data
+ */
+export const generateSQLMigration = (locations: Location[], groups: Group[]): string => {
+  // Start with SQL transaction and comments
+  let sql = `-- SQL Migration generated on ${new Date().toISOString()}
+-- This script will recreate your locations and groups with the same IDs
+-- Run this in the Supabase SQL Editor
+
+BEGIN;
+
+-- Clear existing data (optional, comment out if you want to keep existing data)
+-- DELETE FROM public.locations;
+-- DELETE FROM public.groups WHERE id != 'default';
+
+-- Insert groups data
+INSERT INTO public.groups (id, name, color, description, created_at, user_id)
+VALUES
+`;
+
+  // Add groups data
+  const groupValues = groups
+    .filter(group => group.id !== 'default') // Skip default group as it should already exist
+    .map(group => {
+      const description = group.description ? `'${group.description.replace(/'/g, "''")}'` : 'NULL';
+      return `  ('${group.id}', '${group.name.replace(/'/g, "''")}', '${group.color || ""}', ${description}, NOW(), auth.uid())`;
+    });
+  
+  sql += groupValues.join(',\n');
+  sql += `
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  color = EXCLUDED.color,
+  description = EXCLUDED.description;
+
+-- Insert locations data
+INSERT INTO public.locations (id, title, latitude, longitude, description, tags, group_id, created_at, user_id, directus_id)
+VALUES
+`;
+
+  // Add locations data
+  const locationValues = locations.map(location => {
+    const description = location.description ? `'${location.description.replace(/'/g, "''")}'` : 'NULL';
+    const directusId = location.directusId ? `'${location.directusId}'` : 'NULL';
+    const tags = JSON.stringify(location.tags || []).replace(/"/g, "'");
+    const groupId = location.groupId ? `'${location.groupId}'` : 'NULL';
+    
+    return `  ('${location.id}', '${location.title.replace(/'/g, "''")}', ${location.latitude}, ${location.longitude}, ${description}, ${tags}::text[], ${groupId}, to_timestamp(${location.createdAt / 1000}), auth.uid(), ${directusId})`;
+  });
+  
+  sql += locationValues.join(',\n');
+  sql += `
+ON CONFLICT (id) DO UPDATE SET
+  title = EXCLUDED.title,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  description = EXCLUDED.description,
+  tags = EXCLUDED.tags,
+  group_id = EXCLUDED.group_id,
+  directus_id = EXCLUDED.directus_id;
+
+COMMIT;
+`;
+
+  return sql;
+};
+
+/**
+ * Exports locations and groups as a SQL migration file
+ */
+export const exportToSQLMigration = async (locations: Location[], groups: Group[]): void => {
+  const sqlContent = generateSQLMigration(locations, groups);
+  const filename = `MCCI-GPS-Migration-${new Date().toISOString().slice(0, 10)}.sql`;
+  
+  // Use the existing downloadCSV function but with SQL content
+  downloadCSV(sqlContent, filename);
+};
+

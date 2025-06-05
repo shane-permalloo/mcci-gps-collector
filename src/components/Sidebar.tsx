@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, Trash2, X, LogOut, BarChart, Upload, Keyboard } from 'lucide-react';
+import { Share2, Trash2, X, LogOut, BarChart, Upload, Keyboard, Database } from 'lucide-react';
 import { showAlert, showConfirm } from '../utils/alertUtils.tsx';
 
 interface SidebarProps {
@@ -9,6 +9,7 @@ interface SidebarProps {
   onSignOut: () => void;
   onOpenAnalytics: () => void;
   onOpenImport: () => void;
+  onExportSQL: () => void;  // Add this new prop
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -17,7 +18,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDeleteAll, 
   onSignOut, 
   onOpenAnalytics, 
-  onOpenImport 
+  onOpenImport,
+  onExportSQL  // Add this new prop
 }) => {
   const handleDeleteAll = () => {
     showConfirm(
@@ -102,6 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <LogOut size={20} className="mr-3" />
             Sign Out
           </button>
+         
         </div>
         
         {/* Keyboard shortcuts section */}
@@ -146,6 +149,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               MNS
             </a>
           </p>
+           
+          <button
+            onClick={onExportSQL}
+            className="w-full text-xs flex items-center px-4 py-2 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            Export SQL
+          </button>
         </div>
       </div>
     </div>

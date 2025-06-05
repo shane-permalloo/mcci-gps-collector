@@ -11,7 +11,8 @@ import Auth from './components/Auth';
 import useDarkMode from './hooks/useDarkMode';
 import { supabase } from './lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { getLocations, deleteAllLocations } from './services/locationService';
+import { getLocations, getGroups, deleteAllLocations } from './services/locationService';
+import { exportToSQLMigration } from './utils/exportUtils';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'list' | 'new' | 'import' | 'export' | 'analytics'>('new');
@@ -112,6 +113,24 @@ function App() {
   const handleOpenImport = () => {
     setActiveTab('import');
     setIsSidebarOpen(false);
+  };
+
+  const handleExportSQL = async () => {
+    try {
+      const locations = await getLocations();
+      const groups = await getGroups() || [];
+      
+      if (locations.length === 0) {
+        showAlert('Export Error', 'No locations to export. Save some locations first!');
+        return;
+      }
+      
+      exportToSQLMigration(locations, groups);
+      setIsSidebarOpen(false);
+    } catch (error) {
+      console.error('SQL export failed:', error);
+      showAlert('Export Error', 'SQL export failed. Please try again.');
+    }
   };
 
   // Add this useEffect to ensure the active tab is visible when it changes
@@ -312,6 +331,7 @@ function App() {
         onSignOut={handleSignOut}
         onOpenAnalytics={handleOpenAnalytics}
         onOpenImport={handleOpenImport}
+        onExportSQL={handleExportSQL}
       />
 
       {/* Overlay */}

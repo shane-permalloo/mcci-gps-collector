@@ -110,26 +110,21 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
             </h3>
           )}
           {group.name !== 'Default' ? (
-          <span 
-            className="text-xs font-medium px-2 py-1 rounded-full shrink-0"
-            style={{ 
-              backgroundColor: `${group.color}20`,
-              color: group.color,
-              borderWidth: '1px',
-              borderColor: group.color
-            }}
-          >
-            {group.name}
-          </span>
+            <span 
+              className="text-xs font-medium px-2 py-1 rounded-full shrink-0"
+              style={{ 
+                backgroundColor: group.color,
+                color: getTextColorForBackground(group.color)
+              }}
+            >
+              {group.name}
+            </span>
           ) : 
-          <span 
-            className="text-xs font-medium px-2 py-1 rounded-full shrink-0 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
-            style={{ 
-              backgroundColor: '#f0f0f020',
-            }}
-          >
-            {group.name}
-          </span>
+            <span 
+              className="text-xs font-medium px-2 py-1 rounded-full shrink-0 text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600"
+            >
+              {group.name}
+            </span>
           }
         </div>
         
@@ -263,4 +258,18 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
 
 export default LocationCard;
 
+// Add this helper function to determine text color based on background color
+const getTextColorForBackground = (bgColor: string) => {
+  // Convert hex to RGB
+  const hex = bgColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return white for dark backgrounds, black for light backgrounds
+  return luminance > 0.5 ? '#000000' : '#FFFFFF';
 
+};
