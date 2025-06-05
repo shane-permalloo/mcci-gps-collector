@@ -101,7 +101,7 @@ export const exportDirectusLocationsToCSV = (locations: Location[], groups: Grou
   const directusLocations = locations.filter(location => location.directusId != null);
   
   if (directusLocations.length === 0) {
-    alert('No locations with Directus IDs found. Please assign Directus IDs to locations first.');
+    alert('No locations with shop ID found. Please assign Directus IDs to locations first.');
     return;
   }
   
@@ -109,7 +109,7 @@ export const exportDirectusLocationsToCSV = (locations: Location[], groups: Grou
   const csvContent = locationsToCSV(directusLocations, groups);
   
   // Create a filename with directus-only indicator
-  const filename = `Directus-Locations-${new Date().toISOString().slice(0, 10)}-${Math.floor(Math.random() * 90000) + 10000}.csv`;
+  const filename = `FilledShopID-Locations-${new Date().toISOString().slice(0, 10)}-${Math.floor(Math.random() * 90000) + 10000}.csv`;
   
   // Use the existing downloadCSV function
   downloadCSV(csvContent, filename);
