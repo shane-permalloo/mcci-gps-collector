@@ -29,7 +29,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
 
   // console.log(`Location ${location.id} isOwner: ${isOwner}`);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editedTitle.trim()) {
       setTitleError(true);
       return;
@@ -43,10 +43,16 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
       groupId: editedGroupId,
     };
     
-    updateLocation(updatedLocation);
-    setIsEditing(false);
-    setTitleError(false);
-    onUpdate();
+    try {
+      await updateLocation(updatedLocation);
+      setIsEditing(false);
+      setTitleError(false);
+      // Call onUpdate to refresh the parent component
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating location:', error);
+      alert('Failed to update location.');
+    }
   };
   
   const handleCancel = () => {

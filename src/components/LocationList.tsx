@@ -145,17 +145,17 @@ const LocationList: React.FC = () => {
     return groups.find(group => group.id === id) || { id: 'unknown', name: 'Unknown', color: '#ccc' };
   };
 
-  const handleUpdateLocation = async (updatePromise?: Promise<any>) => {
+  const handleUpdateLocation = async () => {
+    // Force a complete reload of the data
+    setLocations([]);  // Clear current locations
+    setIsLoading(true);
     try {
-      // If an update promise is provided, wait for it to complete
-      if (updatePromise) {
-        await updatePromise;
-      }
-      // Then reload the data
-      await loadData();
+      const freshLocations = await getLocations();
+      setLocations(freshLocations);
     } catch (error) {
-      console.error('Error updating location:', error);
-      alert('Failed to update location. Please try again.');
+      console.error('Error refreshing locations:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
