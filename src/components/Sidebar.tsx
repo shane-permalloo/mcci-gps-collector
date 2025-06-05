@@ -91,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           
           <button
             onClick={handleDeleteAll}
-            className="w-full flex items-center px-4 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="w-full flex items-center px-4 py-2 text-left text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
           >
             <Trash2 size={20} className="mr-3" />
             Delete All Locations

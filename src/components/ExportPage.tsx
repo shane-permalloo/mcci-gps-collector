@@ -423,7 +423,7 @@ const ExportPage: React.FC = () => {
 
         {dateError && (
           <div className="mt-2 px-3 py-2 text-sm bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
-            <p className="text-red-800 dark:text-red-200">
+            <p className="text-red-700 dark:text-red-200">
               {dateError}
             </p>
           </div>

@@ -204,7 +204,7 @@ const Auth: React.FC = () => {
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 flex items-center">
+              <div className="text-sm text-red-700 dark:text-red-400 flex items-center">
                 <AlertCircle size={16} className="mr-1" />
                 {error}
               </div>

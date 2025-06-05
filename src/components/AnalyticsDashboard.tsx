@@ -670,7 +670,7 @@ const AnalyticsDashboard: React.FC = () => {
                   <div className={`flex items-center ml-2 text-sm ${
                     weeklyChangePercentage > 0 
                       ? 'text-teal-600 dark:text-teal-400' 
-                      : 'text-red-600 dark:text-red-400'
+                      : 'text-red-700 dark:text-red-400'
                   }`}>
                     {weeklyChangePercentage > 0 ? (
                       <TrendingUp size={16} className="mr-1" />

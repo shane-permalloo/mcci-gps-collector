@@ -172,7 +172,7 @@ const CSVImport: React.FC = () => {
                 <span className="text-sm">Connected</span>
               </div>
             ) : connectionStatus === "disconnected" ? (
-              <div className="flex items-center text-red-600 dark:text-red-400">
+              <div className="flex items-center text-red-700 dark:text-red-400">
                 <WifiOff size={16} className="mr-1" />
                 <span className="text-sm">Disconnected</span>
               </div>
@@ -253,8 +253,8 @@ const CSVImport: React.FC = () => {
         {errorMessage && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center">
-              <AlertCircle className="mr-2 text-red-600 dark:text-red-400" size={20} />
-              <p className="text-red-800 dark:text-red-200">{errorMessage}</p>
+              <AlertCircle className="mr-2 text-red-700 dark:text-red-400" size={20} />
+              <p className="text-red-700 dark:text-red-200">{errorMessage}</p>
             </div>
           </div>
         )}
@@ -292,10 +292,10 @@ const CSVImport: React.FC = () => {
               {invalidRecords.length > 0 && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg transform">
                   <div className="flex items-center">
-                    <AlertCircle className="mr-2 text-red-600 dark:text-red-400" size={20} />
+                    <AlertCircle className="mr-2 text-red-700 dark:text-red-400" size={20} />
                     <div>
-                      <span className="font-medium text-red-800 dark:text-red-200 block">Invalid Records</span>
-                      <span className="text-2xl font-bold text-red-600 dark:text-red-400">{invalidRecords.length}</span>
+                      <span className="font-medium text-red-700 dark:text-red-200 block">Invalid Records</span>
+                      <span className="text-2xl font-bold text-red-700 dark:text-red-400">{invalidRecords.length}</span>
                     </div>
                   </div>
                 </div>
@@ -364,14 +364,14 @@ const CSVImport: React.FC = () => {
                           {result.status === "success" ? (
                             <CheckCircle className="mr-2 text-green-600 dark:text-green-400" size={16} />
                           ) : result.status === "error" ? (
-                            <AlertCircle className="mr-2 text-red-600 dark:text-red-400" size={16} />
+                            <AlertCircle className="mr-2 text-red-700 dark:text-red-400" size={16} />
                           ) : (
                             <Loader2 className="mr-2 animate-spin text-gray-500" size={16} />
                           )}
                           <div className="flex flex-col">
                             <span className="text-sm font-medium dark:text-gray-100 text-gray-700">{result.record.shop_name}</span>
                             {result.status === "error" && result.message.includes("not found") && (
-                              <span className="text-xs text-red-600 dark:text-red-400 font-medium">Invalid ID: {result.record.id}</span>
+                              <span className="text-xs text-red-700 dark:text-red-400 font-medium">Invalid ID: {result.record.id}</span>
                             )}
                           </div>
                         </div>
@@ -380,7 +380,7 @@ const CSVImport: React.FC = () => {
                             result.status === "success"
                               ? "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200"
                               : result.status === "error"
-                              ? "bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200"
+                              ? "bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200"
                               : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
                           }`}>
                           {result.status}
@@ -389,7 +389,7 @@ const CSVImport: React.FC = () => {
                       {result.message && (
                         <p
                           className={`text-xs mt-1 ${
-                            result.status === "error" && result.message.includes("not found") ? "text-red-600 dark:text-red-400 font-medium" : "text-gray-600 dark:text-gray-400"
+                            result.status === "error" && result.message.includes("not found") ? "text-red-700 dark:text-red-400 font-medium" : "text-gray-600 dark:text-gray-400"
                           }`}>
                           {result.message}
                         </p>

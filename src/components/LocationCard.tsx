@@ -67,7 +67,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ location, group, onDelete, 
   const handleDelete = () => {
     showHtmlConfirm(
       'Confirm deletion',
-      `Are you sure you want to delete the location: <strong class="font-bold text-red-600 dark:text-red-400">${location.title}</strong>?`,
+      `Are you sure you want to delete the location: <strong class="font-bold text-red-700 dark:text-red-400">${location.title}</strong>?`,
       () => {
         onDelete(location.id);
       },

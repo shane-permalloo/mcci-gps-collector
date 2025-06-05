@@ -342,7 +342,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ onLocationSaved }) => {
           </div>
         )}
         {saveError && (
-          <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 rounded-md animate-fade-in">
+          <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded-md animate-fade-in">
             <p className="font-medium">Error saving location:</p>
             <p className="text-sm mt-1">{saveError}</p>
           </div>

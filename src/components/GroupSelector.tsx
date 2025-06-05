@@ -127,7 +127,7 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
     
     showHtmlConfirm(
       'Confirm Group Deletion',
-      `Are you sure you want to delete the group <strong class="font-bold text-red-600 dark:text-red-400">${groups.find(g => g.id === groupId)?.name}</strong>? All locations in this group will be moved to the default group.`,
+      `Are you sure you want to delete the group <strong class="font-bold text-red-700 dark:text-red-400">${groups.find(g => g.id === groupId)?.name}</strong>? All locations in this group will be moved to the default group.`,
       async () => {
         setIsDeleting(true);
         try {
