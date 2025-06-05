@@ -5,59 +5,67 @@ import { getGroups, saveGroup, deleteGroup } from '../services/locationService';
 import { PlusCircle, Trash2, X, Check, Info } from 'lucide-react';
 import { showAlert, showHtmlConfirm } from '../utils/alertUtils.tsx';
 
-// Expanded set of colors that work well in both light and dark modes
+// Organized color palette following UI/UX best practices
 const RECOMMENDED_COLORS = [
-  // Blues
+  // Primary Colors - Start with core colors
   '#3B82F6', // Blue
-  '#60A5FA', // Light Blue
-  '#2563EB', // Royal Blue
-  '#1D4ED8', // Dark Blue
-  '#0EA5E9', // Sky Blue
-  '#0284C7', // Sky Blue 600
-  '#0369A1', // Sky Blue 700
-  '#075985', // Sky Blue 800
-  
-  // Greens
   '#10B981', // Green
-  '#34D399', // Light Green
-  '#059669', // Emerald
-  '#16A34A', // Forest Green
-  '#14B8A6', // Teal
-  '#0D9488', // Teal 600
-  '#0F766E', // Teal 700
-  '#115E59', // Teal 800
-  
-  // Warm Colors
-  '#F59E0B', // Amber
   '#F97316', // Orange
-  '#FB923C', // Light Orange
-  '#EA580C', // Dark Orange
   '#DC2626', // Red
-  '#B91C1C', // Red 700
-  '#991B1B', // Red 800
-  '#7F1D1D', // Red 900
-  
-  // Purples/Pinks
   '#8B5CF6', // Purple
-  '#A855F7', // Violet
-  '#6366F1', // Indigo
-  '#4F46E5', // Indigo 600
-  '#4338CA', // Indigo 700
-  '#3730A3', // Indigo 800
   '#EC4899', // Pink
+  
+  // Light/Bright Variations
+  '#60A5FA', // Light Blue
+  '#38BDF8', // Bright Sky Blue
+  '#34D399', // Light Green
+  '#2DD4BF', // Bright Teal
+  '#FB923C', // Light Orange
+  '#FCD34D', // Bright Gold
+  '#A855F7', // Bright Violet
+  '#F472B6', // Bright Pink
+  
+  // Medium Saturation
+  '#2563EB', // Royal Blue
+  '#0EA5E9', // Sky Blue
+  '#059669', // Emerald
+  '#14B8A6', // Teal
+  '#F59E0B', // Amber
+  '#CA8A04', // Yellow
+  '#6366F1', // Indigo
+  '#C084FC', // Bright Purple
+  
+  // Darker Variations
+  '#1D4ED8', // Dark Blue
+  '#0284C7', // Sky Blue 600
+  '#16A34A', // Forest Green
+  '#0D9488', // Teal 600
+  '#EA580C', // Dark Orange
+  '#A16207', // Yellow 700
+  '#4F46E5', // Indigo 600
   '#DB2777', // Pink 600
   
-  // Other Colors
+  // Deepest Variations
+  '#0369A1', // Sky Blue 700
+  '#075985', // Sky Blue 800
+  '#0F766E', // Teal 700
+  '#115E59', // Teal 800
+  '#B91C1C', // Red 700
+  '#991B1B', // Red 800
+  '#4338CA', // Indigo 700
+  '#3730A3', // Indigo 800
+  
+  // Additional Colors
   '#06B6D4', // Cyan
   '#0891B2', // Dark Cyan
   '#84CC16', // Lime
   '#65A30D', // Lime 600
-  '#4D7C0F', // Lime 700
-  '#CA8A04', // Yellow
-  '#A16207', // Yellow 700
+  '#A3E635', // Bright Lime
   '#BE123C', // Rose
   '#9F1239', // Rose 700
-  '#881337', // Rose 800
+  '#7F1D1D', // Red 900
+  '#D946EF', // Fuchsia 500
+  '#86198F', // Fuchsia 800
 ];
 
 interface GroupSelectorProps {
@@ -75,10 +83,20 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showColorPalette, setShowColorPalette] = useState(false);
+  // Add state for validation
+  const [groupNameError, setGroupNameError] = useState('');
+  const [groupNameTouched, setGroupNameTouched] = useState(false);
 
   useEffect(() => {
     loadGroups();
   }, []);
+
+  // Validate group name when it changes and has been touched
+  useEffect(() => {
+    if (groupNameTouched) {
+      validateGroupName(newGroupName);
+    }
+  }, [newGroupName, groupNameTouched]);
 
   const loadGroups = async () => {
     setIsLoading(true);
@@ -92,26 +110,54 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
     }
   };
 
+  const validateGroupName = (name: string): boolean => {
+    if (!name.trim()) {
+      setGroupNameError('Group name is required');
+      return false;
+    }
+    
+    // Check if group name already exists
+    if (groups.some(group => group.name.toLowerCase() === name.trim().toLowerCase())) {
+      setGroupNameError('A group with this name already exists');
+      return false;
+    }
+    
+    setGroupNameError('');
+    return true;
+  };
+
+  const handleGroupNameBlur = () => {
+    setGroupNameTouched(true);
+    validateGroupName(newGroupName);
+  };
+
   const handleAddGroup = async () => {
-    if (newGroupName.trim()) {
-      const newGroup: Group = {
-        id: uuidv4(),
-        name: newGroupName.trim(),
-        color: newGroupColor,
-      };
-      
-      setIsSaving(true);
-      try {
-        await saveGroup(newGroup);
-        await loadGroups();
-        onGroupSelect(newGroup.id);
-        setNewGroupName('');
-        setShowAddForm(false);
-      } catch (error) {
-        console.error('Error saving group:', error);
-      } finally {
-        setIsSaving(false);
-      }
+    // Set touched to ensure validation runs
+    setGroupNameTouched(true);
+    
+    // Validate before saving
+    if (!validateGroupName(newGroupName)) {
+      return;
+    }
+    
+    const newGroup: Group = {
+      id: uuidv4(),
+      name: newGroupName.trim(),
+      color: newGroupColor,
+    };
+    
+    setIsSaving(true);
+    try {
+      await saveGroup(newGroup);
+      await loadGroups();
+      onGroupSelect(newGroup.id);
+      setNewGroupName('');
+      setGroupNameTouched(false);
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error saving group:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -205,16 +251,22 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
         <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-md mb-4 animate-fade-in">
           <div className="mb-3">
             <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Group Name
+              Group Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               id="groupName"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+              onBlur={handleGroupNameBlur}
+              className={`w-full px-3 py-2 border ${
+                groupNameError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white`}
               placeholder="Enter group name"
             />
+            {groupNameError && (
+              <p className="mt-1 text-sm text-red-500">{groupNameError}</p>
+            )}
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -263,7 +315,12 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
           </div>
           <div className="flex justify-end space-x-2">
             <button
-              onClick={() => setShowAddForm(false)}
+              onClick={() => {
+                setShowAddForm(false);
+                setNewGroupName('');
+                setGroupNameError('');
+                setGroupNameTouched(false);
+              }}
               className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md transition-colors"
               disabled={isSaving}
             >
