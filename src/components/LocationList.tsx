@@ -145,6 +145,20 @@ const LocationList: React.FC = () => {
     return groups.find(group => group.id === id) || { id: 'unknown', name: 'Unknown', color: '#ccc' };
   };
 
+  const handleUpdateLocation = async (updatePromise?: Promise<any>) => {
+    try {
+      // If an update promise is provided, wait for it to complete
+      if (updatePromise) {
+        await updatePromise;
+      }
+      // Then reload the data
+      await loadData();
+    } catch (error) {
+      console.error('Error updating location:', error);
+      alert('Failed to update location. Please try again.');
+    }
+  };
+
   // Pagination calculations
   const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -515,7 +529,7 @@ const LocationList: React.FC = () => {
                 location={location}
                 group={getGroupById(location.groupId)}
                 onDelete={handleDeleteLocation}
-                onUpdate={loadData}
+                onUpdate={handleUpdateLocation}
               />
             ))}
           </div>
