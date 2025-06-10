@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Group } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { getGroups, saveGroup, deleteGroup } from '../services/locationService';
-import { PlusCircle, Trash2, X, Check, Info } from 'lucide-react';
+import { getGroups, saveGroup, deleteGroup, updateGroup } from '../services/locationService';
+import { PlusCircle, Trash2, X, Check, Info, Edit2 } from 'lucide-react';
 import { showAlert, showHtmlConfirm } from '../utils/alertUtils.tsx';
 
 // Organized color palette following UI/UX best practices
@@ -85,6 +85,12 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
   // Add state for validation
   const [groupNameError, setGroupNameError] = useState('');
   const [groupNameTouched, setGroupNameTouched] = useState(false);
+  
+  // Add state for editing
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editedGroupName, setEditedGroupName] = useState('');
+  const [editedGroupColor, setEditedGroupColor] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     loadGroups();
@@ -233,6 +239,71 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
     return luminance > 0.5 ? '#000000' : '#FFFFFF';
   };
 
+  // Add function to handle edit click
+  const handleEditClick = (group: Group) => {
+    setEditingGroupId(group.id);
+    setEditedGroupName(group.name);
+    setEditedGroupColor(group.color);
+    setIsEditing(false); // Initialize as not editing (just showing the form)
+  };
+
+  // Add function to validate edited group name
+  const validateEditedGroupName = (name: string): boolean => {
+    if (!name.trim()) {
+      setGroupNameError('Group name is required');
+      return false;
+    }
+    
+    // Check if group name already exists (excluding the current group being edited)
+    if (groups.some(group => 
+      group.id !== editingGroupId && 
+      group.name.toLowerCase() === name.trim().toLowerCase()
+    )) {
+      setGroupNameError('A group with this name already exists');
+      return false;
+    }
+    
+    setGroupNameError('');
+    return true;
+  };
+
+  // Add function to save edited group
+  const handleSaveEdit = async () => {
+    if (!validateEditedGroupName(editedGroupName)) {
+      return;
+    }
+    
+    setIsEditing(true); // Set to true when save starts
+    try {
+      const updatedGroup: Group = {
+        id: editingGroupId!,
+        name: editedGroupName.trim(),
+        color: editedGroupColor,
+      };
+      
+      await updateGroup(updatedGroup);
+      await loadGroups();
+      
+      // Reset editing state
+      setEditingGroupId(null);
+      setEditedGroupName('');
+      setEditedGroupColor('');
+    } catch (error) {
+      console.error('Error updating group:', error);
+    } finally {
+      setIsEditing(false); // Always reset in finally block
+    }
+  };
+
+  // Add function to cancel editing
+  const handleCancelEdit = () => {
+    setEditingGroupId(null);
+    setEditedGroupName('');
+    setEditedGroupColor('');
+    setGroupNameError('');
+    setIsEditing(false);
+  };
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-2">
@@ -246,7 +317,96 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
         </button>
       </div>
       
-      {showAddForm && (
+      {/* Edit Group Form */}
+      {editingGroupId && (
+        <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-md mb-4 animate-fade-in">
+          <div className="mb-3">
+            <label htmlFor="editGroupName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Group Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="editGroupName"
+              value={editedGroupName}
+              onChange={(e) => {
+                setEditedGroupName(e.target.value);
+                validateEditedGroupName(e.target.value);
+              }}
+              className={`w-full px-3 py-2 border ${
+                groupNameError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white`}
+              placeholder="Enter group name"
+            />
+            {groupNameError && (
+              <p className="mt-1 text-sm text-red-500">{groupNameError}</p>
+            )}
+          </div>
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Group Color
+            </label>
+            
+            <div className="flex items-center mb-2">
+              <div 
+                className="w-10 h-10 rounded-md mr-3 border border-gray-300 dark:border-gray-600"
+                style={{ backgroundColor: editedGroupColor }}
+              ></div>
+              
+              <div className="flex-1">
+                <div 
+                  className="px-3 py-2 rounded-md text-center text-sm font-medium"
+                  style={{ 
+                    backgroundColor: editedGroupColor,
+                    color: getTextColorForBackground(editedGroupColor)
+                  }}
+                >
+                  Preview Text
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-2 p-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+              <div className="flex items-center mb-2">
+                <Info size={14} className="text-gray-500 dark:text-gray-400 mr-2" />
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Select a color for your group
+                </span>
+              </div>
+              <div className="grid grid-cols-8 md:grid-cols-12 gap-2">
+                {RECOMMENDED_COLORS.map(color => (
+                  <div
+                    key={color}
+                    className={`w-8 h-8 rounded-md cursor-pointer border hover:scale-110 transition-transform ${
+                      editedGroupColor === color ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800' : 'border-gray-200 dark:border-gray-700'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setEditedGroupColor(color)}
+                  ></div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={handleCancelEdit}
+              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md transition-colors"
+              disabled={false} // Remove the isEditing condition here
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              disabled={!editedGroupName.trim() || isEditing} // Only disable if name is empty or currently saving
+              className="px-4 py-2 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isEditing ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Existing Add Group Form */}
+      {showAddForm && !editingGroupId && (
         <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-md mb-4 animate-fade-in">
           <div className="mb-3">
             <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -344,8 +504,9 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
             <div key={group.id} className="flex items-center">
               <button
                 onClick={() => onGroupSelect(group.id)}
-                className={`px-4 py-2 ${group.isOwner ? 'rounded-l-full' : 'rounded-full'} 
-                  text-xs font-medium transition-all ${
+                className={`px-4 py-2 ${
+                  group.isOwner ? 'rounded-l-full' : 'rounded-full'
+                } text-xs font-medium transition-all ${
                   selectedGroupId === group.id
                     ? group.id === 'default' 
                       ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900' 
@@ -362,14 +523,32 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
                   borderColor: selectedGroupId === group.id 
                     ? (group.id === 'default' ? '#4B5563' : group.color) 
                     : (group.id === 'default' ? '#9CA3AF' : group.color),
-                  borderRightWidth: group.id === 'default' ? '1px' : '0',
-                  borderRadius: group.id === 'default' ? '9999px' : undefined,
+                  borderRightWidth: group.id === 'default' || !group.isOwner ? '1px' : '0',
+                  borderRadius: group.id === 'default' || !group.isOwner ? '9999px' : undefined,
                 }}
               >
                 {group.name}
               </button>
-              {group.id !== 'default' && (
-                <div className="relative">
+              {group.id !== 'default' && group.isOwner && (
+                <div className="relative flex">
+                  {/* Edit button */}
+                  <button
+                    onClick={() => handleEditClick(group)}
+                    className={`p-2 transition-all border border-l-0 ${
+                      selectedGroupId === group.id
+                        ? 'text-white bg-opacity-100'
+                        : 'text-blue-500 bg-opacity-20 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    }`}
+                    style={{
+                      backgroundColor: selectedGroupId === group.id ? group.color : undefined,
+                      borderColor: group.color,
+                    }}
+                    title="Edit group"
+                  >
+                    <Edit2 size={15} />
+                  </button>
+                  
+                  {/* Delete button */}
                   {showDeleteConfirm === group.id ? (
                     <div className="flex">
                       <button
@@ -388,24 +567,21 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
                       </button>
                     </div>
                   ) : (
-                    // Only show delete button if user owns the group
-                    group.isOwner && (
-                      <button
-                        onClick={() => handleDeleteClick(group.id)}
-                        className={`p-2 rounded-r-full transition-all border border-l-0 hover:bg-red-50 dark:hover:bg-red-900/20 ${
-                          selectedGroupId === group.id
-                            ? 'text-white bg-opacity-100'
-                            : 'text-red-500 bg-opacity-20'
-                        }`}
-                        style={{
-                          backgroundColor: selectedGroupId === group.id ? group.color : undefined,
-                          borderColor: group.color,
-                        }}
-                        title="Delete group"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    )
+                    <button
+                      onClick={() => handleDeleteClick(group.id)}
+                      className={`p-2 rounded-r-full transition-all border border-l-0 hover:bg-red-50 dark:hover:bg-red-900/20 ${
+                        selectedGroupId === group.id
+                          ? 'text-white bg-opacity-100'
+                          : 'text-red-500 bg-opacity-20'
+                      }`}
+                      style={{
+                        backgroundColor: selectedGroupId === group.id ? group.color : undefined,
+                        borderColor: group.color,
+                      }}
+                      title="Delete group"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   )}
                 </div>
               )}

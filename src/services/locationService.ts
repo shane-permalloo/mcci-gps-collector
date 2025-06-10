@@ -276,6 +276,33 @@ export const saveGroup = async (group: Group): Promise<void> => {
   }
 };
 
+// Update an existing group
+export const updateGroup = async (group: Group): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("User must be authenticated to update groups");
+  }
+
+  try {
+    const { error } = await supabase
+      .from("groups")
+      .update({
+        name: group.name,
+        color: group.color,
+      })
+      .eq("id", group.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Error updating group in the database:", error);
+      throw error;
+    }
+  } catch (error) {
+    console.error("Failed to update group in the database:", error);
+    throw error;
+  }
+};
+
 // Delete a group
 export const deleteGroup = async (id: string): Promise<void> => {
   const { data: { user } } = await supabase.auth.getUser();
