@@ -82,7 +82,6 @@ const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroupId, onGroupS
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showColorPalette, setShowColorPalette] = useState(false);
   // Add state for validation
   const [groupNameError, setGroupNameError] = useState('');
   const [groupNameTouched, setGroupNameTouched] = useState(false);

@@ -3,7 +3,7 @@ import { Location, Group } from '../types';
 import { getLocations, getGroups, deleteLocation } from '../services/locationService';
 import LocationCard from './LocationCard';
 import LocationMap from './LocationMap';
-import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ArrowUpDown, ChevronRight } from 'lucide-react';
+import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ArrowUpDown, ChevronRight, Smartphone } from 'lucide-react';
 import { supabase } from "../lib/supabase";
 
 const ITEMS_PER_PAGE = 50;
@@ -23,6 +23,9 @@ const LocationList: React.FC = () => {
   const [sortColumn, setSortColumn] = useState<SortColumn>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
+  
+  // Add state for mobile app filter
+  const [showMobileAppOnly, setShowMobileAppOnly] = useState(false);
 
   type SortColumn = 'title' | 'createdAt' | 'group' | 'coordinates';
 
@@ -34,7 +37,7 @@ const LocationList: React.FC = () => {
     filterAndSortLocations();
     // Reset to first page when filters change
     setCurrentPage(1);
-  }, [locations, filterGroupId, searchTerm, sortColumn, sortDirection]);
+  }, [locations, filterGroupId, searchTerm, sortColumn, sortDirection, showMobileAppOnly]);
   
   const loadData = async () => {
     setIsLoading(true);
@@ -100,6 +103,11 @@ const LocationList: React.FC = () => {
         location.description?.toLowerCase().includes(term) ||
         location.tags?.some(tag => tag.toLowerCase().includes(term))
       );
+    }
+    
+    // Add filter for locations with directus_id (available on mobile app)
+    if (showMobileAppOnly) {
+      filtered = filtered.filter(location => location.directusId !== undefined && location.directusId !== null);
     }
     
     // Apply column-based sorting
@@ -418,6 +426,34 @@ const LocationList: React.FC = () => {
     setSortOrder(sortDirection === 'desc' ? 'oldest' : 'newest');
   };
 
+  // Toggle switch component
+  const ToggleSwitch = ({ 
+    checked, 
+    onChange, 
+    label 
+  }: { 
+    checked: boolean; 
+    onChange: (checked: boolean) => void; 
+    label: string 
+  }) => {
+    return (
+      <div className="flex items-center">
+        <label className="inline-flex items-center cursor-pointer">
+          <input 
+            type="checkbox" 
+            className="sr-only peer" 
+            checked={checked}
+            onChange={e => onChange(e.target.checked)}
+          />
+          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300 flex items-center">
+            {label}
+          </span>
+        </label>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -466,7 +502,7 @@ const LocationList: React.FC = () => {
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={18} className="text-gray-400" />
@@ -496,6 +532,15 @@ const LocationList: React.FC = () => {
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Filter size={18} className="text-gray-400" />
           </div>
+        </div>
+        
+        {/* Add mobile app toggle */}
+        <div className="w-full sm:w-auto ver">
+          <ToggleSwitch 
+            checked={showMobileAppOnly} 
+            onChange={setShowMobileAppOnly}
+            label="On mobile app?"
+          />
         </div>
       </div>
       
@@ -538,7 +583,12 @@ const LocationList: React.FC = () => {
       )}
       
       <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center md:text-left">
-        {filteredLocations.length} location{filteredLocations.length !== 1 ? 's' : ''} {filterGroupId || searchTerm ? 'found' : 'saved'}
+        {filteredLocations.length} location{filteredLocations.length !== 1 ? 's' : ''} {filterGroupId || searchTerm || showMobileAppOnly ? 'found' : 'saved'}
+        {showMobileAppOnly && (
+          <span className="ml-1 text-blue-500 dark:text-blue-400">
+            (mobile app only)
+          </span>
+        )}
         {filteredLocations.length > itemsPerPage && !viewMode.includes('map') && (
           <span> (Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredLocations.length)})</span>
         )}

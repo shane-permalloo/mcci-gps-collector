@@ -227,7 +227,8 @@ export const getGroups = async (): Promise<Group[]> => {
 
     const { data: groups, error } = await supabase
       .from("groups")
-      .select("*");
+      .select("*")
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error("Error fetching groups:", error);

@@ -916,11 +916,11 @@ const AnalyticsDashboard: React.FC = () => {
           </div>
         )}
         
-        <div className="h-[600px]">
+        <div className="h-[800px]">
           {filteredMapLocations.length > 0 ? (
             <MapContainer
               center={[filteredMapLocations[0].latitude, filteredMapLocations[0].longitude]}
-              zoom={13}
+              zoom={11}
               style={{ height: '100%', width: '100%' }}
               className="rounded-lg"
               zoomControl={false}
