@@ -6,7 +6,7 @@ import LocationMap from './LocationMap';
 import { List, Grid, SortAsc, SortDesc, Search, Filter, Map, ChevronLeft, ArrowUpDown, ChevronRight } from 'lucide-react';
 import { supabase } from "../lib/supabase";
 
-const ITEMS_PER_PAGE = 30;
+const ITEMS_PER_PAGE = 50;
 
 const LocationList: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -194,9 +194,9 @@ const LocationList: React.FC = () => {
             }}
             className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
           >
-            <option value={30}>30</option>
-            <option value={90}>90</option>
-            <option value={150}>150</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+            <option value={200}>200</option>
             <option value={0}>All</option>
           </select>
         </div>
